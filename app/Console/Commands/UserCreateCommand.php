@@ -41,6 +41,9 @@ class UserCreateCommand extends Command
         if (!$this->argument('name'))
             $errors[] = "Укажите имя пользователя, передав его третим аргументом аргументом";
 
+        if ($this->argument('email') and User::where('email', $this->argument('email'))->count())
+            $errors[] = "Пользователь с таким адресом электронной почты уже существет";
+
         if (count($errors ?? [])) {
 
             $this->error(" Ошибка создания нового пользователя: ");

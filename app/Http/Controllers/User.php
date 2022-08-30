@@ -8,6 +8,30 @@ use Illuminate\Support\Facades\Auth;
 class User extends Controller
 {
     /**
+     * Формирует данные пользователя
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function userData(Request $request)
+    {
+        return $request->user();
+    }
+
+    /**
+     * Выводит данные пользователя
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function user(Request $request)
+    {
+        return response()->json(
+            $this->userData($request)
+        );
+    }
+
+    /**
      * Авторизация пользователя
      * 
      * @param  \Illuminate\Http\Request $request
@@ -27,7 +51,7 @@ class User extends Controller
 
         return response()->json([
             'message' => "Добро пожаловать, {$request->user()->name}!",
-            'user' => Auth::user(),
+            'user' => $this->userData($request),
             'token' => $token->plainTextToken,
         ]);
     }
