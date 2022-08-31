@@ -9,6 +9,52 @@ use Illuminate\Http\Request;
 class Expenses extends Controller
 {
     /**
+     * Список типов расхода
+     * 
+     * @var array
+     */
+    protected $expense_types = [
+        0 => null
+    ];
+
+    /**
+     * Выводит строки расхода
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index(Request $request)
+    {
+        $paginate = CashboxTransaction::whereIsExpense(true)
+            ->orderBy('id', 'DESC')
+            ->paginate(60);
+
+        $rows = $paginate->map(function ($row) {
+            return $this->getRowData($row, true);
+        });
+
+        return response()->json([
+            'rows' => $rows,
+        ]);
+    }
+
+    /**
+     * Формирует строку расхода на вывод
+     * 
+     * @param  \App\Models\CashboxTransaction $row
+     * @param  boolean $ro_array
+     * @return \App\Models\CashboxTransaction|array
+     */
+    public function getRowData(CashboxTransaction $row, $to_array = false)
+    {
+        $row->sum = abs($row->sum);
+
+        $row->type = $this->getExpenseTypeName($row->expense_type_id);
+
+        return $to_array ? $row->toArray() : $row;
+    }
+
+    /**
      * Вывод данных одного расхода
      * 
      * @param  \Illuminate\Http\Request $request
@@ -21,17 +67,23 @@ class Expenses extends Controller
         if ($request->id and !$row)
             return response()->json(['message' => "Данные о раcходе не найдены"], 400);
 
-        $response['row'] = $row ?? [];
-
         if ($request->modalData) {
 
             $response['types'] = ExpenseType::orderBy('name')
                 ->get()
                 ->map(function ($row) {
+
+                    $this->expense_types[$row->id] = $row->name;
+
                     return $row->only('name', 'id');
                 })
                 ->toArray();
         }
+
+        if ($row)
+            $row = $this->getRowData($row);
+
+        $response['row'] = $row ?? [];
 
         return response()->json($response);
     }
@@ -56,22 +108,37 @@ class Expenses extends Controller
             'expense_type_id' => "required|numeric",
         ]);
 
-        $sum = (float) $request->sum;
-
-        if ($sum > 0)
-            $sum *= -1;
+        $request_sum = (float) $request->sum;
+        $sum = $request_sum > 0 ? $request_sum * (-1) : $request_sum;
 
         $row->name = $request->name;
         $row->sum = $sum;
         $row->is_expense = true;
         $row->expense_type_id = $request->expense_type_id;
         $row->expense_subtype_id = $request->expense_subtype_id;
-        $row->date = now()->format("Y-m-d");
+        $row->date = $row->date ?: now()->format("Y-m-d");
+        $row->user_id = $row->user_id ?: $request->user()->id;
 
         $row->save();
 
         return response()->json([
-            'row' => $row,
+            'row' => $this->getRowData($row),
         ]);
+    }
+
+    /**
+     * Выводит наименоватие типа расхода
+     * 
+     * @param  int|null $id
+     * @return string|null
+     */
+    public function getExpenseTypeName($id)
+    {
+        $id = (int) $id;
+
+        if (isset($this->expense_types[$id]))
+            return $this->expense_types[$id];
+
+        return $this->expense_types[$id] = ExpenseType::find($id)->name ?? null;
     }
 }

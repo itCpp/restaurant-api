@@ -22,12 +22,18 @@ Route::group(['prefix' => "user"], function () {
     Route::post('auth', [App\Http\Controllers\User::class, "login"]);
 });
 
-/** Маршруты по расходам */
-Route::group(['prefix' => "expenses"], function () {
+Route::middleware('auth:sanctum')->group(function () {
 
-    /** Вывод данных одного маршрута */
-    Route::post('get', [App\Http\Controllers\Expenses::class, "get"]);
+    /** Маршруты по расходам */
+    Route::group(['prefix' => "expenses"], function () {
 
-    /** Сохранение расхода */
-    Route::put('save', [App\Http\Controllers\Expenses::class, "save"]);
+        /** Вывод расхода */
+        Route::post('/', [App\Http\Controllers\Expenses::class, "index"]);
+
+        /** Вывод данных одного маршрута */
+        Route::post('get', [App\Http\Controllers\Expenses::class, "get"]);
+
+        /** Сохранение расхода */
+        Route::put('save', [App\Http\Controllers\Expenses::class, "save"]);
+    });
 });
