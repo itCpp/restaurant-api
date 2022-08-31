@@ -35,5 +35,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Сохранение расхода */
         Route::put('save', [App\Http\Controllers\Expenses::class, "save"]);
+
+        /** Удаление строки */
+        Route::post('drop', [App\Http\Controllers\Expenses::class, "drop"]);
+
+        /** Вывод фиксированных пунктов наименования */
+        Route::post('types', [App\Http\Controllers\Expenses\Types::class, "getSubTypesList"]);
     });
 });

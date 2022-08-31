@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('expense_subtypes', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('expense_type_id');
+            $table->bigInteger('expense_type_id')->index();
             $table->string('name');
             $table->timestamps();
         });

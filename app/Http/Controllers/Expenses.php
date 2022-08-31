@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Expenses\Types;
 use App\Models\CashboxTransaction;
+use App\Models\ExpenseSubtype;
 use App\Models\ExpenseType;
 use Illuminate\Http\Request;
 
@@ -14,6 +16,15 @@ class Expenses extends Controller
      * @var array
      */
     protected $expense_types = [
+        0 => null
+    ];
+
+    /**
+     * Список фиксированных наименований расходов
+     * 
+     * @var array
+     */
+    protected $expense_subtypes = [
         0 => null
     ];
 
@@ -50,6 +61,7 @@ class Expenses extends Controller
         $row->sum = abs($row->sum);
 
         $row->type = $this->getExpenseTypeName($row->expense_type_id);
+        $row->name_type = $this->getExpenseSubTypeName($row->expense_subtype_id);
 
         return $to_array ? $row->toArray() : $row;
     }
@@ -111,6 +123,12 @@ class Expenses extends Controller
         $request_sum = (float) $request->sum;
         $sum = $request_sum > 0 ? $request_sum * (-1) : $request_sum;
 
+        if ($request->expense_type_id and is_string($request->expense_subtype_id))
+            $request->expense_subtype_id = Types::createSubType($request->expense_type_id, $request->expense_subtype_id);
+
+        if (!$request->expense_type_id and $request->expense_subtype_id)
+            $request->expense_subtype_id = null;
+
         $row->name = $request->name;
         $row->sum = $sum;
         $row->is_expense = true;
@@ -140,5 +158,39 @@ class Expenses extends Controller
             return $this->expense_types[$id];
 
         return $this->expense_types[$id] = ExpenseType::find($id)->name ?? null;
+    }
+
+    /**
+     * Выводит фиксированное наименоватие расхода
+     * 
+     * @param  int|null $id
+     * @return string|null
+     */
+    public function getExpenseSubTypeName($id)
+    {
+        $id = (int) $id;
+
+        if (isset($this->expense_subtypes[$id]))
+            return $this->expense_subtypes[$id];
+
+        return $this->expense_subtypes[$id] = ExpenseSubtype::find($id)->name ?? null;
+    }
+
+    /**
+     * Удаляет строку
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function drop(Request $request)
+    {
+        if (!$row = CashboxTransaction::find($request->id))
+            return response()->json(['message' => "Данные о расходе не найдены"], 400);
+
+        $row->delete();
+
+        return response()->json([
+            'row' => $this->getRowData($row),
+        ]);
     }
 }
