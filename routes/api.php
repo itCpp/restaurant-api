@@ -42,4 +42,11 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Вывод фиксированных пунктов наименования */
         Route::post('types', [App\Http\Controllers\Expenses\Types::class, "getSubTypesList"]);
     });
+
+    /** Доходы */
+    Route::group(['prefix' => "incomes"], function () {
+
+        /** Вывод всех данных */
+        Route::get("/", [App\Http\Controllers\Incomes::class, "index"]);
+    });
 });
