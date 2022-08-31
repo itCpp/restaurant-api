@@ -13,12 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('expenses', function (Blueprint $table) {
+        Schema::create('cashbox_transactions', function (Blueprint $table) {
             $table->id();
             $table->string("name")->nullable()->comment("Наименование расхода");
             $table->float('sum')->default(0)->comment("Сумма расхода");
+            $table->boolean('is_income')->default(0)->comment("Является доходом");
+            $table->boolean('is_expense')->default(0)->comment("Является расходом");
             $table->integer('expense_type_id')->nullable()->comment("Тип расхода");
-            $table->integer('expense_subtype_id')->nullable()->comment("Тип расхода");
+            $table->integer('expense_subtype_id')->nullable()->comment("Подтип расхода");
+            $table->date('date')->nullable()->comment("Дата операции");
             $table->timestamps();
             $table->softDeletes();
         });
@@ -31,6 +34,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('expenses');
+        Schema::dropIfExists('cashbox_transactions');
     }
 };
