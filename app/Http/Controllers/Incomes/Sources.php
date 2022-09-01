@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Incomes;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashboxTransaction;
 use App\Models\IncomeSource;
 use Illuminate\Http\Request;
 
@@ -30,5 +31,40 @@ class Sources extends Controller
     public static function getSourcesListForPart($id)
     {
         return IncomeSource::wherePartId($id)->lazy()->toArray();
+    }
+
+    /**
+     * Формирует данные помещения
+     * 
+     * @param  \App\Models\IncomeSource $row
+     * @return \App\Models\IncomeSource
+     */
+    public function getIncomeSourceRow(IncomeSource $row)
+    {
+        $row->last = CashboxTransaction::whereIncomeSourceId($row->id)
+            ->orderBy('date', "DESC")
+            ->first();
+
+        if ($row->last and $row->date) {
+            $row->overdue = ($row->date <= $row->last->date and now() >= now()->create($row->last->date)->addMonth());
+        }
+
+        return $row;
+    }
+
+    /**
+     * Данные источника дохода
+     * 
+     * @param  \Illuminate\Htpp\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function get(Request $request)
+    {
+        if (!$row = IncomeSource::find($request->id))
+            return response()->json(['message' => "Данные не найдены"], 400);
+
+        return response()->json([
+            'row' => $row,
+        ]);
     }
 }

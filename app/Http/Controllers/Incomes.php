@@ -45,15 +45,7 @@ class Incomes extends Controller
      */
     public function getIncomeSourceRow(IncomeSource $row)
     {
-        $row->last = CashboxTransaction::whereIncomeSourceId($row->id)
-            ->orderBy('date', "DESC")
-            ->first();
-
-        if ($row->last and $row->date) {
-            $row->overdue = now() > now()->create($row->last->date)->addMonth();
-        }
-
-        return $row;
+        return (new Sources)->getIncomeSourceRow($row);
     }
 
     /**

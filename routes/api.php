@@ -52,10 +52,16 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Данные для внесения строки дохода */
         Route::post("add", [App\Http\Controllers\Incomes::class, "add"]);
 
+        /** Save data income row */
+        Route::post('save', [App\Http\Controllers\Incomes::class, "save"]);
+
         /** Выводит список помещений */
         Route::post('sources', [App\Http\Controllers\Incomes\Sources::class, "index"]);
 
-        /** Save data income row */
-        Route::post('save', [App\Http\Controllers\Incomes::class, "save"]);
+        /** Данные источника дохода */
+        Route::get('source/get', [App\Http\Controllers\Incomes\Sources::class, "get"]);
+
+        /** Сохранение данных помещения */
+        Route::put('source/save', [App\Http\Controllers\Incomes\Sources::class, "save"]);
     });
 });
