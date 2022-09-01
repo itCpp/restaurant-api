@@ -48,5 +48,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Вывод всех данных */
         Route::get("/", [App\Http\Controllers\Incomes::class, "index"]);
+
+        /** Данные для внесения строки дохода */
+        Route::post("add", [App\Http\Controllers\Incomes::class, "add"]);
+
+        /** Выводит список помещений */
+        Route::post('sources', [App\Http\Controllers\Incomes\Sources::class, "index"]);
+
+        /** Save data income row */
+        Route::post('save', [App\Http\Controllers\Incomes::class, "save"]);
     });
 });

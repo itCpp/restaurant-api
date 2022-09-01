@@ -9,7 +9,7 @@ use Illuminate\Database\Seeder;
 class IncomePartsSeeder extends Seeder
 {
     /**
-     * Данные типов
+     * Данные разделов
      * 
      * @var array
      */

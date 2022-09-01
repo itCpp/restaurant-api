@@ -18,5 +18,6 @@ class IncomeSource extends Model
     protected $casts = [
         'date' => "date:Y-m-d",
         'settings' => AsCollection::class,
+        'is_free' => "boolean",
     ];
 }
