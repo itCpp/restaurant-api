@@ -49,6 +49,9 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Вывод всех данных */
         Route::get("/", [App\Http\Controllers\Incomes::class, "index"]);
 
+        /** Вывод строк оплаты */
+        Route::post("view", [App\Http\Controllers\Incomes::class, "view"]);
+
         /** Данные для внесения строки дохода */
         Route::post("add", [App\Http\Controllers\Incomes::class, "add"]);
 

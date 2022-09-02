@@ -6,6 +6,7 @@ use App\Http\Controllers\Incomes\Sources;
 use App\Models\CashboxTransaction;
 use App\Models\IncomePart;
 use App\Models\IncomeSource;
+use App\Models\IncomeSourceLog;
 use Illuminate\Http\Request;
 
 class Incomes extends Controller
@@ -26,7 +27,10 @@ class Incomes extends Controller
                     ->get()
                     ->map(function ($row) {
                         return $this->getIncomeSourceRow($row);
-                    });
+                    })
+                    ->sortBy('to_sort')
+                    ->values()
+                    ->all();
 
                 return $row;
             })
@@ -107,5 +111,83 @@ class Incomes extends Controller
             'row' => $row,
             'source' => $this->getIncomeSourceRow($source),
         ]);
+    }
+
+    /**
+     * Вывод строк выплаты
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function view(Request $request)
+    {
+        $rows = CashboxTransaction::whereIsIncome(true)
+            ->when((bool) $request->source_id, function ($query) use ($request) {
+                $query->whereIncomeSourceId($request->source_id);
+            })
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->map(function ($row) {
+
+                $row->source = $this->getSourceInfo($row);
+
+                return $row;
+            });
+
+        return response()->json([
+            'rows' => $rows,
+            $this->get_source_info ?? [],
+        ]);
+    }
+
+    /**
+     * Выводит информацию об источнике
+     * 
+     * @param  \App\Models\CashboxTransaction $row
+     * @return \App\Models\IncomeSource|null
+     */
+    public function getSourceInfo($row)
+    {
+        $id = $row->income_source_id;
+
+        if (empty($this->get_source_info))
+            $this->get_source_info = [];
+
+        if (empty($this->get_source_info[$id]))
+            $this->get_source_info[$id] = [];
+
+        if (!count($this->get_source_info[$id])) {
+
+            $log = $this->getIncomeSourceLog($id, $row->date);
+
+            if ($log)
+                return $this->get_source_info[$id][$log->change_date->format("Y-m-d")] = $log->source_data;
+        }
+
+        foreach ($this->get_source_info[$id] as $date => $source) {
+
+            if ($date <= $row->date)
+                return $source;
+        }
+
+        if ($log = $this->getIncomeSourceLog($id, $row->date)) {
+            return $this->get_source_info[$id][$log->change_date->format("Y-m-d")] = $log->source_data;
+        }
+
+        return $this->get_source_info[$id][now()->format("Y-m-d")] = IncomeSource::find($id);
+    }
+
+    /**
+     * Возвращает строку источника дохода из истории изменений
+     * 
+     * @param  int $id
+     * @param  string $date
+     * @return \App\Models\IncomeSourceLog|null
+     */
+    public function getIncomeSourceLog($id, $date)
+    {
+        return IncomeSourceLog::whereSourceId($id)
+            ->where('change_date', '>', $date)
+            ->first();
     }
 }

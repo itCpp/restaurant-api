@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Incomes;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Incomes;
 use App\Models\CashboxTransaction;
+use App\Models\IncomePart;
 use App\Models\IncomeSource;
+use App\Models\IncomeSourceLog;
 use Illuminate\Http\Request;
 
 class Sources extends Controller
@@ -45,11 +48,35 @@ class Sources extends Controller
             ->orderBy('date', "DESC")
             ->first();
 
-        if ($row->last and $row->date) {
-            $row->overdue = ($row->date <= $row->last->date and now() >= now()->create($row->last->date)->addMonth());
-        }
+        $row->overdue = $this->checkOverdue($row->date, $row->last->date ?? null);
+
+        $row->to_sort = (int) $row->cabinet == trim($row->cabinet)
+            ? (int) $row->cabinet : $row->cabinet;
 
         return $row;
+    }
+
+    /**
+     * Проверяет просрочку оплаты
+     * 
+     * @param  null|string $date
+     * @param  null|string $pay
+     * @return bool
+     */
+    public static function checkOverdue($date, $pay)
+    {
+        if ($date and !$pay)
+            return now()->subMonth() > now()->create($date);
+
+        if ($date and $pay) {
+
+            if ($date > $pay)
+                return false;
+
+            return now()->subMonth() >= now()->create($pay);
+        }
+
+        return false;
     }
 
     /**
@@ -60,11 +87,51 @@ class Sources extends Controller
      */
     public function get(Request $request)
     {
-        if (!$row = IncomeSource::find($request->id))
+        $row = IncomeSource::find($request->id);
+
+        if (!$request->getParts and !$row)
             return response()->json(['message' => "Данные не найдены"], 400);
 
         return response()->json([
-            'row' => $row,
+            'row' => $row ?? [],
+            'parts' => $request->getParts ? IncomePart::lazy()->toArray() : [],
+        ]);
+    }
+
+    /**
+     * Создание или изменение данных помещения
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function save(Request $request)
+    {
+        $row = IncomeSource::find($request->id);
+
+        if ($request->id and !$row)
+            return response()->json(['message' => "Данные о помещении не найдены"], 400);
+
+        if ($row)
+            IncomeSourceLog::log($request, $row);
+        else
+            $row = new IncomeSource;
+
+        $row->part_id = $request->part_id;
+        $row->name = $request->name;
+        $row->inn = $request->inn;
+        $row->contact_person = $request->contact_person;
+        $row->contact_number = $request->contact_number;
+        $row->space = $request->space;
+        $row->cabinet = $request->cabinet;
+        $row->price = $request->price;
+        $row->date = $request->date;
+        $row->is_free = (bool) $request->is_free;
+        $row->settings = $request->settings ?? [];
+
+        $row->save();
+
+        return response()->json([
+            'row' => $this->getIncomeSourceRow($row),
         ]);
     }
 }
