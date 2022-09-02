@@ -24,6 +24,9 @@ Route::group(['prefix' => "user"], function () {
 
 Route::middleware('auth:sanctum')->group(function () {
 
+    /** Главная страница */
+    Route::get("main", [App\Http\Controllers\Main::class, "index"]);
+
     /** Маршруты по расходам */
     Route::group(['prefix' => "expenses"], function () {
 
