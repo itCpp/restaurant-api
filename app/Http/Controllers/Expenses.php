@@ -134,8 +134,8 @@ class Expenses extends Controller
         $row->is_expense = true;
         $row->expense_type_id = $request->expense_type_id;
         $row->expense_subtype_id = $request->expense_subtype_id;
-        $row->date = $row->date ?: now()->format("Y-m-d");
-        $row->month = $row->month ?: now()->format("Y-m");
+        $row->date = $request->date ?: now()->format("Y-m-d");
+        $row->month = now()->create($row->date)->format("Y-m");
         $row->user_id = $row->user_id ?: $request->user()->id;
 
         $row->save();
