@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('cabinet')->nullable()->comment("Наименование кабинета");
             $table->float('price')->nullable()->comment("Стоимость за 1 кв.м");
             $table->date('date')->nullable()->comment("Дата начала аренды");
-            $table->json('settings')->default('[]')->comment("Прочие настройки");
+            $table->json('settings')->nullable()->comment("Прочие настройки");
             $table->timestamps();
         });
     }
