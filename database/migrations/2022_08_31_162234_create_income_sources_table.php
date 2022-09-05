@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -25,7 +24,7 @@ return new class extends Migration
             $table->string('cabinet')->nullable()->comment("Наименование кабинета");
             $table->float('price')->nullable()->comment("Стоимость за 1 кв.м");
             $table->date('date')->nullable()->comment("Дата начала аренды");
-            $table->json('settings')->default(new Expression('(JSON_ARRAY())'))->comment("Прочие настройки");
+            $table->json('settings')->default('[]')->comment("Прочие настройки");
             $table->timestamps();
         });
     }
