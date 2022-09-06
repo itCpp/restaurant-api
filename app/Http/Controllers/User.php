@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\UserLoginStory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -58,6 +59,14 @@ class User extends Controller
             $abilities,
             $request->remember ? null : now()->endOfDay(),
         );
+
+        UserLoginStory::create([
+            'user_id' => $request->user()->id,
+            'token_id' => explode("|", $token->plainTextToken)[0] ?? null,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'token_abilities' => $abilities,
+        ]);
 
         return response()->json([
             'message' => "Добро пожаловать, {$request->user()->name}!",
