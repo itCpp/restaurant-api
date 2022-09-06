@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('user_login_stories', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('user_id')->index();
+            $table->foreignId('user_id')->constrained();
             $table->bigInteger('token_id');
             $table->ipAddress('ip')->nullable();
             $table->string('user_agent', 500)->nullable();
