@@ -55,4 +55,22 @@ class User extends Controller
             'token' => $token->plainTextToken,
         ]);
     }
+
+    /**
+     * Выход пользователя
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout(Request $request)
+    {
+        if ($token_id = $request->user()->currentAccessToken()->id ?? null) {
+            $request->user()->tokens()->whereId($token_id)->delete();
+        }
+
+        return response()->json([
+            'message' => "До скорой встречи!",
+            'tokenId' => $token_id,
+        ]);
+    }
 }

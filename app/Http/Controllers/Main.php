@@ -49,6 +49,7 @@ class Main extends Controller
 
         return response()->json([
             'chart' => $data,
+            'sessions' => request()->user()->tokens,
         ]);
     }
 

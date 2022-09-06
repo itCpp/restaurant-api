@@ -20,6 +20,8 @@ Route::group(['prefix' => "user"], function () {
 
     /** Авторизация */
     Route::post('auth', [App\Http\Controllers\User::class, "login"]);
+    /** Выход */
+    Route::get('logout', [App\Http\Controllers\User::class, "logout"])->middleware('auth:sanctum');
 });
 
 Route::middleware('auth:sanctum')->group(function () {
