@@ -19,8 +19,15 @@ class Files extends Controller
      */
     public function index(Request $request)
     {
+        $files = File::whereCashboxId($request->id)
+            ->orderBy('id', "DESC")
+            ->get()
+            ->map(function ($row) {
+                return $row;
+            });
+
         return response()->json([
-            'files' => [],
+            'files' => $files,
         ]);
     }
 
@@ -85,6 +92,6 @@ class Files extends Controller
      */
     public function createFileName($extension = null)
     {
-        return (bool) $extension ? Str::finish(Str::orderedUuid(), ".{$extension}") : Str::orderedUuid();
+        return (bool) $extension ? Str::finish(Str::orderedUuid(), "." . Str::lower($extension)) : Str::orderedUuid();
     }
 }
