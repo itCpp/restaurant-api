@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class User extends Controller
 {
@@ -47,7 +48,16 @@ class User extends Controller
         if (!Auth::attempt($credentials))
             return response()->json(['message' => "Неверный логин или пароль"], 400);
 
-        $token = $request->user()->createToken(now()->format("YmdHis"));
+        /** Полномочия токена */
+        $abilities = ['*'];
+
+        $token_name = $request->ip() . " - " . $request->userAgent();
+
+        $token = $request->user()->createToken(
+            Str::limit($token_name, 255, "..."),
+            $abilities,
+            $request->remember ? null : now()->endOfDay(),
+        );
 
         return response()->json([
             'message' => "Добро пожаловать, {$request->user()->name}!",
