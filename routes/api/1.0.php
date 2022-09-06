@@ -46,6 +46,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Вывод фиксированных пунктов наименования */
         Route::post('types', [App\Http\Controllers\Expenses\Types::class, "getSubTypesList"]);
+
+        /** Список файлов по расходу */
+        Route::post('files', [App\Http\Controllers\Expenses\Files::class, "index"]);
+
+        /** Загрузка нового файла */
+        Route::post('file/upload', [App\Http\Controllers\Expenses\Files::class, "upload"]);
     });
 
     /** Доходы */
