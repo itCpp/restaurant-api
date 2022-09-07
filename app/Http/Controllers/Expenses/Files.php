@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class Files extends Controller
 {
@@ -23,12 +24,27 @@ class Files extends Controller
             ->orderBy('id', "DESC")
             ->get()
             ->map(function ($row) {
-                return $row;
+                return $this->getFileRow($row);
             });
 
         return response()->json([
             'files' => $files,
         ]);
+    }
+
+    /**
+     * Формирует строку с файлом на вывод
+     * 
+     * @param  \App\Models\File $row
+     * @return \App\Models\File
+     */
+    public function getFileRow(File $row)
+    {
+        $name = encrypt(request()->bearerToken());
+
+        $row->url = Str::finish(env("APP_URL", "http://localhost"), "/") . "api/1.0/download/file/{$name}?id=" . $row->id;
+
+        return $row;
     }
 
     /**
@@ -80,7 +96,7 @@ class Files extends Controller
         $file->save();
 
         return response()->json([
-            'file' => $file,
+            'file' => $this->getFileRow($file),
         ]);
     }
 
@@ -93,5 +109,32 @@ class Files extends Controller
     public function createFileName($extension = null)
     {
         return (bool) $extension ? Str::finish(Str::orderedUuid(), "." . Str::lower($extension)) : Str::orderedUuid();
+    }
+
+    /**
+     * Скачивание файла
+     * 
+     * @param  \Illumniate\Http\Request $request
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     * 
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     */
+    public function download(Request $request, $name)
+    {
+        $bearer_token = decrypt($name);
+        $token_id = explode("|", $bearer_token)[0] ?? null;
+
+        if (!$token = PersonalAccessToken::find($token_id))
+            abort(403);
+
+        if ($token->expires_at and $token->expires_at < now())
+            abort(403);
+
+        if (!$row = File::find($request->id))
+            abort(404);
+
+        $path = storage_path("app/{$row->path}/{$row->file_name}");
+
+        return response()->file($path);
     }
 }
