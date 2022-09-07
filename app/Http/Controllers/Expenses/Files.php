@@ -121,8 +121,12 @@ class Files extends Controller
      */
     public function download(Request $request, $name)
     {
-        $bearer_token = decrypt($name);
-        $token_id = explode("|", $bearer_token)[0] ?? null;
+        try {
+            $bearer_token = decrypt($name);
+            $token_id = explode("|", $bearer_token)[0] ?? null;
+        } catch (Exception) {
+            abort(403);
+        }
 
         if (!$token = PersonalAccessToken::find($token_id))
             abort(403);
