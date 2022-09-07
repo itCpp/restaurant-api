@@ -29,6 +29,13 @@ Route::get("download/file/{name}", [App\Http\Controllers\Expenses\Files::class, 
 
 Route::middleware('auth:sanctum')->group(function () {
 
+    /** Маршруты файлов */
+    Route::group(['prefix' => "files"], function () {
+
+        /** Смена имени */
+        Route::post('rename', [App\Http\Controllers\Expenses\Files::class, "rename"]);
+    });
+
     /** Главная страница */
     Route::get("main", [App\Http\Controllers\Main::class, "index"]);
 

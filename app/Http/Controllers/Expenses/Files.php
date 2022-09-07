@@ -117,6 +117,7 @@ class Files extends Controller
      * @param  \Illumniate\Http\Request $request
      * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      * 
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
     public function download(Request $request, $name)
@@ -140,5 +141,30 @@ class Files extends Controller
         $path = storage_path("app/{$row->path}/{$row->file_name}");
 
         return response()->file($path);
+    }
+
+    /**
+     * Смена имени
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function rename(Request $request)
+    {
+        $request->validate([
+            'name' => "required",
+        ]);
+
+        if (!$file = File::find($request->id))
+            return response()->json(['message' => "Файл не найден или уже удален"], 400);
+
+        $file->name = $file->extension
+            ? Str::finish($request->name, ".{$file->extension}") : $request->name;
+
+        $file->save();
+
+        return response()->json(
+            $this->getFileRow($file)
+        );
     }
 }
