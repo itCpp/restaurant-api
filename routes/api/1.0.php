@@ -34,6 +34,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Смена имени */
         Route::post('rename', [App\Http\Controllers\Expenses\Files::class, "rename"]);
+        /** Удаление файла */
+        Route::delete('drop', [App\Http\Controllers\Expenses\Files::class, "drop"]);
+        /** Восстановление удаленного файла */
+        Route::post('reestablish', [App\Http\Controllers\Expenses\Files::class, "reestablish"]);
     });
 
     /** Главная страница */

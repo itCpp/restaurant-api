@@ -167,4 +167,40 @@ class Files extends Controller
             $this->getFileRow($file)
         );
     }
+
+    /**
+     * Удаление файла
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function drop(Request $request)
+    {
+        if (!$file = File::find($request->id))
+            return response()->json(['message' => "Файл не найден или уже удален"], 400);
+
+        $file->delete();
+
+        return response()->json(
+            $this->getFileRow($file)
+        );
+    }
+
+    /**
+     * Восстановление удаленного файла
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function reestablish(Request $request)
+    {
+        if (!$file = File::withTrashed()->find($request->id))
+            return response()->json(['message' => "Файл не найден"], 400);
+
+        $file->restore();
+
+        return response()->json(
+            $this->getFileRow($file)
+        );
+    }
 }
