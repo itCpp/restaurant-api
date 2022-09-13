@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Incomes;
 use App\Models\CashboxTransaction;
 use App\Models\IncomePart;
+use App\Models\IncomesFile;
 use App\Models\IncomeSource;
 use App\Models\IncomeSourceLog;
 use Illuminate\Http\Request;
@@ -47,6 +48,8 @@ class Sources extends Controller
         $row->last = CashboxTransaction::whereIncomeSourceId($row->id)
             ->orderBy('date', "DESC")
             ->first();
+
+        $row->files_count = IncomesFile::whereIncomeId($row->id)->count();
 
         $row->overdue = $this->checkOverdue($row->date, $row->last->date ?? null);
 
