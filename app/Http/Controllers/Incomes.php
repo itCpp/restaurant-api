@@ -19,7 +19,8 @@ class Incomes extends Controller
      */
     public function index(Request $request)
     {
-        $rows = IncomePart::get()
+        $rows = IncomePart::whereBuildingId($request->id)
+            ->get()
             ->map(function ($row) {
 
                 $row->rows = IncomeSource::wherePartId($row->id)
