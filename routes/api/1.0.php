@@ -33,11 +33,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::group(['prefix' => "files"], function () {
 
         /** Смена имени */
-        Route::post('rename', [App\Http\Controllers\Expenses\Files::class, "rename"]);
+        Route::post('rename', [App\Http\Controllers\Files::class, "rename"]);
         /** Удаление файла */
-        Route::delete('drop', [App\Http\Controllers\Expenses\Files::class, "drop"]);
+        Route::delete('drop', [App\Http\Controllers\Files::class, "drop"]);
         /** Восстановление удаленного файла */
-        Route::post('reestablish', [App\Http\Controllers\Expenses\Files::class, "reestablish"]);
+        Route::post('reestablish', [App\Http\Controllers\Files::class, "reestablish"]);
     });
 
     /** Главная страница */
@@ -91,5 +91,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Сохранение данных помещения */
         Route::put('source/save', [App\Http\Controllers\Incomes\Sources::class, "save"]);
+
+        /** Список файлов по расходу */
+        Route::post('files', [App\Http\Controllers\Incomes\Files::class, "index"]);
+
+        /** Загрузка нового файла */
+        Route::post('file/upload', [App\Http\Controllers\Incomes\Files::class, "upload"]);
+    });
+
+    /** Сотрудники */
+    Route::group(['prefix' => "employees"], function () {
+
+        /** Вывод сотрудников */
+        Route::post('/', [App\Http\Controllers\Employees::class, "index"]);
     });
 });
