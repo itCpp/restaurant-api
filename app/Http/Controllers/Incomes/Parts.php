@@ -22,11 +22,19 @@ class Parts extends Controller
             'name' => "required",
         ]);
 
-        $row = IncomePart::create([
-            'building_id' => $request->building_id,
-            'name' => $request->name,
-            'comment' => $request->comment,
-        ]);
+        $row = IncomePart::find($request->id);
+
+        if ($request->id and !$row)
+            return response()->json(['message' => "Раздел не найден"], 400);
+
+        if (!$request->id and !$row)
+            $row = new IncomePart;
+
+        $row->building_id = $request->building_id;
+        $row->name = $request->name;
+        $row->comment = $request->comment;
+
+        $row->save();
 
         $row->rows = (new Incomes)->getSourcesPart($row->id);
 
