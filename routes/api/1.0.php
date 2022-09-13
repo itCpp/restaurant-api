@@ -97,6 +97,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Загрузка нового файла */
         Route::post('file/upload', [App\Http\Controllers\Incomes\Files::class, "upload"]);
+
+        /** Разделы */
+        Route::group(['prefix' => "part"], function () {
+
+            /** Создание раздела */
+            Route::post('save', [App\Http\Controllers\Incomes\Parts::class, "save"]);
+        });
     });
 
     /** Сотрудники */

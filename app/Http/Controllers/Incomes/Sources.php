@@ -82,7 +82,7 @@ class Sources extends Controller
     /**
      * Данные источника дохода
      * 
-     * @param  \Illuminate\Htpp\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function get(Request $request)
@@ -94,8 +94,21 @@ class Sources extends Controller
 
         return response()->json([
             'row' => $row ?? [],
-            'parts' => $request->getParts ? IncomePart::lazy()->toArray() : [],
+            'parts' => $this->getPartList($request),
         ]);
+    }
+
+    /**
+     * Выводит список разделов для здания
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return array
+     */
+    public function getPartList(Request $request)
+    {
+        return $request->getParts ? IncomePart::when((bool) $request->building, function ($query) use ($request) {
+            $query->whereBuildingId($request->building);
+        })->lazy()->toArray() : [];
     }
 
     /**

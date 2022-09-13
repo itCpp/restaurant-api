@@ -23,15 +23,7 @@ class Incomes extends Controller
             ->get()
             ->map(function ($row) {
 
-                $row->rows = IncomeSource::wherePartId($row->id)
-                    ->orderBy('cabinet')
-                    ->get()
-                    ->map(function ($row) {
-                        return $this->getIncomeSourceRow($row);
-                    })
-                    ->sortBy('to_sort')
-                    ->values()
-                    ->all();
+                $row->rows = $this->getSourcesPart($row->id);
 
                 return $row;
             })
@@ -40,6 +32,25 @@ class Incomes extends Controller
         return response()->json([
             'rows' => $rows,
         ]);
+    }
+
+    /**
+     * Выводит строки источников
+     * 
+     * @param  int $id
+     * @return array
+     */
+    public function getSourcesPart($id)
+    {
+        return IncomeSource::wherePartId($id)
+            ->orderBy('cabinet')
+            ->get()
+            ->map(function ($row) {
+                return $this->getIncomeSourceRow($row);
+            })
+            ->sortBy('to_sort')
+            ->values()
+            ->all();
     }
 
     /**
