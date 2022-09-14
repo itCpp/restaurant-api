@@ -30,4 +30,31 @@ class EmployeeWorkDate extends Model
         'work_start' => Date::class,
         'work_stop' => Date::class,
     ];
+
+    /**
+     * Проверяет и изменяет периода работы
+     * 
+     * @param  int $user_id
+     * @param  null|string $start
+     * @param  null|string $stop
+     * @return \App\Models\EmployeeWorkDate
+     */
+    public static function checkAndChangeWorkDate($user_id, $start = null, $stop = null)
+    {
+        $row = static::whereEmployeeId($row->id)->orderBy('id', "DESC")->first();
+
+        if (!$row) {
+            return static::create([
+                'employee_id' => $user_id,
+                'work_start' => $start,
+                'work_stop' => $stop,
+            ]);
+        }
+
+        // if ((bool) $row->work_start and !(bool) $row->work_stop) {
+        //     $row->
+        // }
+
+        return $row;
+    }
 }

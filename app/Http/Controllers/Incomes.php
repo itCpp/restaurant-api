@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Incomes\Purposes;
 use App\Http\Controllers\Incomes\Sources;
 use App\Models\CashboxTransaction;
 use App\Models\IncomePart;
@@ -74,6 +75,7 @@ class Incomes extends Controller
     {
         return response()->json([
             'parts' => IncomePart::lazy()->toArray(),
+            'purposes' => Purposes::getAll(),
             'sources' => $request->income_part_id ? Sources::getSourcesListForPart($request->income_part_id) : [],
         ]);
     }
@@ -90,6 +92,7 @@ class Incomes extends Controller
             'sum' => "required|numeric",
             'income_part_id' => "required|integer",
             'income_source_id' => "required|integer",
+            'purpose_pay' => "required|integer",
         ]);
 
         if (!$source = IncomeSource::find($request->income_source_id)) {
@@ -110,6 +113,7 @@ class Incomes extends Controller
 
         $row->sum = $request->sum;
         $row->type_pay = $request->type_pay;
+        $row->purpose_pay = $request->purpose_pay;
         $row->is_income = true;
         $row->income_part_id = $request->income_part_id;
         $row->income_source_id = $source->id;

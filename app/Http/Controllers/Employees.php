@@ -114,6 +114,21 @@ class Employees extends Controller
 
         $row->personal_data = $personal_data;
 
+        $row->employee_otdel_id = $request->employee_otdel_id;
+        $row->surname = $request->surname;
+        $row->name = $request->name;
+        $row->middle_name = $request->middle_name;
+        $row->job_title = $request->job_title;
+        $row->phone = $request->phone;
+        $row->telegram_id = $request->telegram_id;
+        $row->email = $request->email;
+
+        $row->save();
+
+        EmployeeWorkDate::checkAndChangeWorkDate(
+            $row->id, $request->date_work_start, $request->date_work_stop
+        );
+
         return response()->json(
             $this->employee($row),
         );
