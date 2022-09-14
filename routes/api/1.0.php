@@ -112,5 +112,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Вывод сотрудников */
         Route::post('/', [App\Http\Controllers\Employees::class, "index"]);
+
+        /** Список должностей */
+        Route::get('jobTitleList', [App\Http\Controllers\Employees\JobTitles::class, "index"]);
+
+        /** Новый сотрудник */
+        Route::put('create', [App\Http\Controllers\Employees::class, "create"]);
     });
 });
