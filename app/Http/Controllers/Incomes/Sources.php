@@ -141,7 +141,9 @@ class Sources extends Controller
         $row->cabinet = $request->cabinet;
         $row->price = $request->price;
         $row->date = $request->date;
+        $row->date_to = $request->date_to;
         $row->is_free = (bool) $request->is_free;
+        $row->is_parking = (bool) $request->is_parking;
         $row->settings = $request->settings ?? [];
 
         $row->save();

@@ -25,7 +25,9 @@ class IncomeSource extends Model
         'cabinet',
         'price',
         'date',
+        'date_to',
         'is_free',
+        'is_parking',
         'settings',
     ];
 
@@ -38,5 +40,6 @@ class IncomeSource extends Model
         'date' => "date:Y-m-d",
         'settings' => AsCollection::class,
         'is_free' => "boolean",
+        'is_parking' => "boolean",
     ];
 }
