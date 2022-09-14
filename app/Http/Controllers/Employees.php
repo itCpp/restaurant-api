@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Employees\JobTitles;
+use App\Http\Controllers\Employees\Shedules;
 use App\Models\Employee;
+use App\Models\EmployeeWorkDate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class Employees extends Controller
 {
@@ -15,9 +19,39 @@ class Employees extends Controller
      */
     public function index(Request $request)
     {
+        $rows = Employee::lazy()
+            ->map(function ($row) {
+                return $this->employee($row);
+            });
+
         return response()->json([
             'rows' => $rows ?? [],
         ]);
+    }
+
+    /**
+     * Формирует строку сотрудника
+     * 
+     * @param  \App\Models\Employee $row
+     * @return \App\Models\Employee
+     */
+    public function employee(Employee $row)
+    {
+        $row->fullname = $row->fullname;
+        $row->work_shedule = $row->work_shedule;
+        $row->work_shedule_time = $row->work_shedule_time;
+
+        $work_dates = EmployeeWorkDate::whereEmployeeId($row->id)->orderBy('id', "DESC")->first();
+        $row->date_work_start = $work_dates->work_start;
+        $row->date_work_stop = $work_dates->work_stop;
+
+        if (is_array($row->personal_data)) {
+            foreach ($row->personal_data as $key => $value) {
+                $row->{"personal_data_" . $key} = $value;
+            }
+        }
+
+        return $row;
     }
 
     /**
@@ -49,7 +83,40 @@ class Employees extends Controller
 
         $row->save();
 
-        return response()->json($row);
+        EmployeeWorkDate::create([
+            'employee_id' => $row->id,
+            'work_start' => now(),
+        ]);
+
+        return response()->json(
+            $this->employee($row)
+        );
+    }
+
+    /**
+     * Изменение данных сотруднкиа
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function save(Request $request)
+    {
+        if (!$row = Employee::find($request->id))
+            return response()->json(['message' => "Данные сотрудника не найдены"], 400);
+
+        $personal_data = [];
+
+        foreach ($request->all() as $key => $value) {
+            if (Str::startsWith($key, "personal_data_")) {
+                $personal_data[Str::replace("personal_data_", "", $key)] = $value;
+            }
+        }
+
+        $row->personal_data = $personal_data;
+
+        return response()->json(
+            $this->employee($row),
+        );
     }
 
     /**
@@ -62,5 +129,23 @@ class Employees extends Controller
         $max = (int) Employee::max('pin');
 
         return $max > 100 ? $max : 100;
+    }
+
+    /**
+     * Выводит данные сотрудника
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function get(Request $request)
+    {
+        if (!$row = Employee::find($request->id))
+            return response()->json(['message' => "Данные сотрудника не найдены"], 400);
+
+        return response()->json([
+            'row' => $this->employee($row),
+            'shedule' => (new Shedules)->getSheduleTypes(),
+            'jobTitles' => JobTitles::list($row->employee_otdel_id),
+        ]);
     }
 }

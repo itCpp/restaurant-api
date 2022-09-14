@@ -118,5 +118,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Новый сотрудник */
         Route::put('create', [App\Http\Controllers\Employees::class, "create"]);
+        /** Изменение данных */
+        Route::put('save', [App\Http\Controllers\Employees::class, "save"]);
+
+        /** Данные сотрудника */
+        Route::get('get', [App\Http\Controllers\Employees::class, "get"]);
     });
 });
