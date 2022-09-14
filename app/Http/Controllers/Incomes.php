@@ -118,7 +118,7 @@ class Incomes extends Controller
         $row->income_part_id = $request->income_part_id;
         $row->income_source_id = $source->id;
         $row->date = $request->date ?: now()->format("Y-m-d");
-        $row->month = $request->month ?: now()->format("Y-m");
+        $row->month = now()->create($row->date)->format("Y-m");
         $row->user_id = $request->user()->id;
 
         $row->save();
