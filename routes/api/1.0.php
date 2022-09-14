@@ -25,7 +25,8 @@ Route::group(['prefix' => "user"], function () {
 });
 
 /** Ссылка для скачивания файла */
-Route::get("download/file/{name}", [App\Http\Controllers\Expenses\Files::class, "download"]);
+// Route::get("download/file/{type}", [App\Http\Controllers\Files::class, "download"]);
+Route::get("download/file/{type}/{name?}", [App\Http\Controllers\Files::class, "download"]);
 
 Route::middleware('auth:sanctum')->group(function () {
 

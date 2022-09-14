@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\File;
 use App\Models\IncomesFile;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class Files extends Controller
 {
@@ -30,19 +32,21 @@ class Files extends Controller
     /**
      * Формирует строку с файлом на вывод
      * 
-     * @param  \App\Models\IncomesFile|\App\Models\File $row
-     * @return \App\Models\IncomesFile|\App\Models\File
+     * @param  \App\Models\File|\App\Models\IncomesFile $row
+     * @return \App\Models\File|\App\Models\IncomesFile
      */
-    public function getFileRow(IncomesFile|File $row)
+    public function getFileRow(File|IncomesFile $row)
     {
-        $hash = encrypt(request()->bearerToken());
+        $url = Str::finish(env("APP_URL", "http://localhost"), "/");
 
-        $url = "api/1.0/download/income/file";
+        if ($row instanceof IncomesFile)
+            $url .= "api/1.0/download/file/income/";
+        else
+            $url .= "api/1.0/download/file/";
 
-        if ($this->model instanceof File)
-            $url = "api/1.0/download/file";
+        $url .= encrypt(request()->bearerToken());
 
-        $row->url = Str::finish(env("APP_URL", "http://localhost"), "/") . "{$url}/{$hash}?id=" . $row->id;
+        $row->url = $url . "?id=" . $row->id;
 
         return $row;
     }
@@ -117,5 +121,46 @@ class Files extends Controller
         return response()->json(
             $this->getFileRow($file)
         );
+    }
+
+    /**
+     * Скачивание файла
+     * 
+     * @param  \Illumniate\Http\Request $request
+     * @param  string $type
+     * @param  null|string $name
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     * 
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     */
+    public function download(Request $request, $type, $name = null)
+    {
+        if ($type === "income") {
+            $model = new IncomesFile;
+        } else {
+            $model = new File;
+            $name = $type;
+        }
+
+        try {
+            $bearer_token = decrypt($name);
+            $token_id = explode("|", $bearer_token)[0] ?? null;
+        } catch (Exception) {
+            abort(403);
+        }
+
+        if (!$token = PersonalAccessToken::find($token_id))
+            abort(403);
+
+        if ($token->expires_at and $token->expires_at < now())
+            abort(403);
+
+        if (!$row = $model->find($request->id))
+            abort(404);
+
+        $path = storage_path("app/{$row->path}/{$row->file_name}");
+
+        return response()->file($path);
     }
 }
