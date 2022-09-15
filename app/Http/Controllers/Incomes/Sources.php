@@ -60,7 +60,7 @@ class Sources extends Controller
 
         $row->fine = PayFine::where('source_id', $row->id)
             ->when((bool) $row->date, function ($query) use ($row) {
-                $query->where('date', '<=', $row->date);
+                $query->where('date', '>=', $row->date);
             })
             ->when((bool) $row->date_to, function ($query) use ($row) {
                 $query->where('date', '<=', $row->date_to);

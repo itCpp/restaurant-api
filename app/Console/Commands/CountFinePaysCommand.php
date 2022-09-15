@@ -43,7 +43,8 @@ class CountFinePaysCommand extends Command
             ->each(function ($row) {
                 try {
                     $this->checkSource($row);
-                } catch (Exception) {
+                } catch (Exception $e) {
+                    $this->error($e->getMessage());
                 }
             });
 
@@ -66,9 +67,10 @@ class CountFinePaysCommand extends Command
             $sum = $row->last->sum ?? 0;
         }
 
-        if ($row->overdue ?? null) {
+        if (($row->overdue ?? null) and !(bool) ($row->settings['no_fine'] ?? false)) {
 
-            $percent = $row->settings['fine_percent'] ?? 1;
+            $percent = (float) ($row->settings['fine_percent'] ?? 1);
+            $percent = $percent ?: 1;
 
             PayFine::create([
                 'source_id' => $row->id,
