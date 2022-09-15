@@ -59,7 +59,9 @@ class Sources extends Controller
             ? (int) $row->cabinet : $row->cabinet;
 
         $row->fine = PayFine::where('source_id', $row->id)
-            ->where('date', '>=', $row->date)
+            ->when((bool) $row->date, function ($query) use ($row) {
+                $query->where('date', '<=', $row->date);
+            })
             ->when((bool) $row->date_to, function ($query) use ($row) {
                 $query->where('date', '<=', $row->date_to);
             })
