@@ -189,14 +189,25 @@ class Incomes extends Controller
                             $is_internet = true;
                     }
 
-                    if (!$is_arenda)
+                    if (!$is_arenda) {
                         $row[] = $this->getEmptyRow($source->id, 1, $key);
+                    }
 
-                    if (!$is_parking)
-                        $row[] = $this->getEmptyRow($source->id, 2, $key);
+                    if (!$is_parking) {
 
-                    if (!$is_internet)
-                        $row[] = $this->getEmptyRow($source->id, 5, $key);
+                        $new_row = $this->getEmptyRow($source->id, 2, $key);
+
+                        if ($source->is_parking ?? null)
+                            $row[] = $new_row;
+                    }
+
+                    if (!$is_internet) {
+
+                        $new_row = $this->getEmptyRow($source->id, 5, $key);
+
+                        if ($source->is_internet ?? null)
+                            $row[] = $new_row;
+                    }
 
                     return [
                         'month' => $key,
