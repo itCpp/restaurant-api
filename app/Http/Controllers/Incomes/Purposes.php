@@ -17,6 +17,7 @@ class Purposes extends Controller
         ['id' => 2, 'name' => "Парковка", 'every_month' => true],
         ['id' => 3, 'name' => "Депозит", 'every_month' => false],
         ['id' => 4, 'name' => "Юр. адрес", 'every_month' => false],
+        ['id' => 5, 'name' => "Интернет", 'every_month' => true],
     ];
 
     /**

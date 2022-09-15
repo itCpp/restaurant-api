@@ -106,6 +106,7 @@ class Sources extends Controller
             'price' => round(((float) $row->price * (float) $row->space), 2),
             'type' => 1,
             'icon' => "building",
+            'title' => "Аренда помещения",
         ];
 
         if ($row->is_parking) {
@@ -115,6 +116,16 @@ class Sources extends Controller
                 'type' => 2,
                 'icon' => "car",
                 'title' => "Аренда парковки",
+            ];
+        }
+
+        if ($row->is_internet) {
+            $next_pays[] = [
+                'date' => $next_date,
+                'price' => $row->settings['internet_price'] ?? 0,
+                'type' => 5,
+                'icon' => "internet explorer",
+                'title' => "Интернет услуги",
             ];
         }
 
@@ -193,6 +204,7 @@ class Sources extends Controller
         $row->date_to = $request->date_to;
         $row->is_free = (bool) $request->is_free;
         $row->is_parking = (bool) $request->is_parking;
+        $row->is_internet = (bool) $request->is_internet;
         $row->settings = $request->settings ?? [];
 
         $row->save();
