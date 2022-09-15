@@ -28,4 +28,19 @@ class Purposes extends Controller
     {
         return (new static)->purposes;
     }
+
+    /**
+     * Выводит идентификаторы ежемесячных платежей
+     * 
+     * @return array
+     */
+    public static function getEveryMonthId()
+    {
+        return collect((new static)->purposes)
+            ->where('every_month', true)
+            ->map(function ($row) {
+                return $row['id'];
+            })
+            ->all();
+    }
 }

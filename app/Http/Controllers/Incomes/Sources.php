@@ -51,7 +51,7 @@ class Sources extends Controller
 
         $row->files_count = IncomesFile::whereIncomeId($row->id)->count();
 
-        $row->overdue = $this->checkOverdue($row->date, $row->last->date ?? null);
+        $row->overdue = $this->checkOverdue($row);
 
         $row->to_sort = (int) $row->cabinet == trim($row->cabinet)
             ? (int) $row->cabinet : $row->cabinet;
@@ -62,21 +62,44 @@ class Sources extends Controller
     /**
      * Проверяет просрочку оплаты
      * 
-     * @param  null|string $date
-     * @param  null|string $pay
+     * @param  \App\Models\IncomeSource $row
      * @return bool
      */
-    public static function checkOverdue($date, $pay)
+    public static function checkOverdue(&$row)
     {
-        if ($date and !$pay)
-            return now()->subMonth() > now()->create($date);
+        /** Ежемесячные платежи */
+        $last_every_month = [];
 
-        if ($date and $pay) {
+        foreach (Purposes::getEveryMonthId() as $value) {
 
-            if ($date > $pay)
-                return false;
+            $last = CashboxTransaction::whereIncomeSourceId($row->id)
+                ->wherePurposePay($value)
+                ->orderBy('date', "DESC")
+                ->first();
 
-            return now()->subMonth() >= now()->create($pay);
+            if (!$last)
+                continue;
+
+            $last_every_month[] = $last;
+        }
+
+        $row->last_every_month = $last_every_month;
+
+        if ($row->is_free)
+            return false;
+
+        $pay_day = $row->settings['pay_day'] ?? false;
+        $date = now()->setDay($pay_day ?: 20);
+
+        if ($date > now())
+            $date->subMonth();
+
+        $row->date_to = $date;
+
+        foreach ($last_every_month as $pay) {
+
+            if ($date > now()->create($pay->date)->addMonth())
+                return true;
         }
 
         return false;
