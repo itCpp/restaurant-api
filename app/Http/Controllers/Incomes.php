@@ -167,6 +167,19 @@ class Incomes extends Controller
                 return $row;
             });
 
+        $date_check = now()->create($source->date ?? now());
+
+        while ($date_check->format("Y-m") <= now()->format("Y-m")) {
+
+            $month = $date_check->format("Y-m");
+
+            if (!isset($data[$month])) {
+                $data[$month] = [];
+            }
+
+            $date_check->addMonth();
+        }
+
         return response()->json([
             'row' => $source,
             'rows' => $rows,
