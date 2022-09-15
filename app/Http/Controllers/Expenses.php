@@ -6,6 +6,7 @@ use App\Http\Controllers\Expenses\Types;
 use App\Models\CashboxTransaction;
 use App\Models\ExpenseSubtype;
 use App\Models\ExpenseType;
+use App\Models\Log;
 use Illuminate\Http\Request;
 
 class Expenses extends Controller
@@ -140,6 +141,8 @@ class Expenses extends Controller
 
         $row->save();
 
+        Log::write($row, $request);
+
         return response()->json([
             'row' => $this->getRowData($row),
         ]);
@@ -189,6 +192,8 @@ class Expenses extends Controller
             return response()->json(['message' => "Данные о расходе не найдены"], 400);
 
         $row->delete();
+
+        Log::write($row, $request);
 
         return response()->json([
             'row' => $this->getRowData($row),

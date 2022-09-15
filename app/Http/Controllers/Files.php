@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\File;
 use App\Models\IncomesFile;
+use App\Models\Log;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -82,6 +83,8 @@ class Files extends Controller
 
         $file->save();
 
+        Log::write($file, $request);
+
         return response()->json(
             $this->getFileRow($file)
         );
@@ -100,6 +103,8 @@ class Files extends Controller
 
         $file->delete();
 
+        Log::write($file, $request);
+
         return response()->json(
             $this->getFileRow($file)
         );
@@ -117,6 +122,8 @@ class Files extends Controller
             return response()->json(['message' => "Файл не найден"], 400);
 
         $file->restore();
+
+        Log::write($file, $request);
 
         return response()->json(
             $this->getFileRow($file)

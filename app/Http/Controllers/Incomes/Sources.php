@@ -9,6 +9,7 @@ use App\Models\IncomePart;
 use App\Models\IncomesFile;
 use App\Models\IncomeSource;
 use App\Models\IncomeSourceLog;
+use App\Models\Log;
 use Illuminate\Http\Request;
 
 class Sources extends Controller
@@ -208,6 +209,8 @@ class Sources extends Controller
         $row->settings = $request->settings ?? [];
 
         $row->save();
+
+        Log::write($row, $request);
 
         return response()->json([
             'row' => $this->getIncomeSourceRow($row),

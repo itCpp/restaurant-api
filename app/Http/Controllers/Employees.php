@@ -6,6 +6,7 @@ use App\Http\Controllers\Employees\JobTitles;
 use App\Http\Controllers\Employees\Shedules;
 use App\Models\Employee;
 use App\Models\EmployeeWorkDate;
+use App\Models\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -83,6 +84,8 @@ class Employees extends Controller
 
         $row->save();
 
+        Log::write($row, $request);
+
         EmployeeWorkDate::create([
             'employee_id' => $row->id,
             'work_start' => now(),
@@ -124,6 +127,8 @@ class Employees extends Controller
         $row->email = $request->email;
 
         $row->save();
+
+        Log::write($row, $request);
 
         EmployeeWorkDate::checkAndChangeWorkDate(
             $row->id, $request->date_work_start, $request->date_work_stop

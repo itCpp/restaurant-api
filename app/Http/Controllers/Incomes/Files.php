@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Incomes;
 
 use App\Http\Controllers\Files as ControllersFiles;
 use App\Models\IncomesFile;
+use App\Models\Log;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -78,6 +79,8 @@ class Files extends ControllersFiles
         }
 
         $file->save();
+
+        Log::write($file, $request);
 
         return response()->json([
             'file' => $this->getFileRow($file),

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Incomes;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Incomes;
 use App\Models\IncomePart;
+use App\Models\Log;
 use Illuminate\Http\Request;
 
 class Parts extends Controller
@@ -35,6 +36,8 @@ class Parts extends Controller
         $row->comment = $request->comment;
 
         $row->save();
+
+        Log::write($row, $request);
 
         $row->rows = (new Incomes)->getSourcesPart($row->id);
 

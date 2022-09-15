@@ -8,6 +8,7 @@ use App\Models\CashboxTransaction;
 use App\Models\IncomePart;
 use App\Models\IncomeSource;
 use App\Models\IncomeSourceLog;
+use App\Models\Log;
 use Illuminate\Http\Request;
 
 class Incomes extends Controller
@@ -122,6 +123,8 @@ class Incomes extends Controller
         $row->user_id = $request->user()->id;
 
         $row->save();
+
+        Log::write($row, $request);
 
         return response()->json([
             'row' => $row,
