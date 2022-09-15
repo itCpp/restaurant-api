@@ -103,7 +103,7 @@ class Sources extends Controller
 
         $next_pays[] = [
             'date' => $next_date,
-            'price' => round(((int) $row->price * (int) $row->space), 2),
+            'price' => round(((float) $row->price * (float) $row->space), 2),
             'type' => 1,
             'icon' => "building",
         ];
