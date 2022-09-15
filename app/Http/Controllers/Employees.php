@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Employees\JobTitles;
 use App\Http\Controllers\Employees\Shedules;
 use App\Models\Employee;
+use App\Models\EmployeeSalary;
 use App\Models\EmployeeWorkDate;
 use App\Models\Log;
 use Illuminate\Http\Request;
@@ -45,6 +46,9 @@ class Employees extends Controller
         $work_dates = EmployeeWorkDate::whereEmployeeId($row->id)->orderBy('id', "DESC")->first();
         $row->date_work_start = $work_dates->work_start;
         $row->date_work_stop = $work_dates->work_stop;
+
+        $salary = EmployeeSalary::whereEmployeeId($row->id)->orderBy('start_date', "DESC")->first();
+        $row->salary = $salary->salary ?? 0;
 
         if (is_array($row->personal_data)) {
             foreach ($row->personal_data as $key => $value) {

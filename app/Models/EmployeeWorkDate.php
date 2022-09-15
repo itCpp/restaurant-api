@@ -41,7 +41,7 @@ class EmployeeWorkDate extends Model
      */
     public static function checkAndChangeWorkDate($user_id, $start = null, $stop = null)
     {
-        $row = static::whereEmployeeId($row->id)->orderBy('id', "DESC")->first();
+        $row = static::whereEmployeeId($user_id)->orderBy('id', "DESC")->first();
 
         if (!$row) {
             return static::create([
@@ -51,9 +51,18 @@ class EmployeeWorkDate extends Model
             ]);
         }
 
-        // if ((bool) $row->work_start and !(bool) $row->work_stop) {
-        //     $row->
-        // }
+        if ($row->work_start and $row->work_stop and $start > $row->work_stop) {
+            return static::create([
+                'employee_id' => $user_id,
+                'work_start' => $start,
+                'work_stop' => $stop,
+            ]);
+        }
+
+        $row->work_start = $start;
+        $row->work_stop = $stop;
+
+        $row->save();
 
         return $row;
     }

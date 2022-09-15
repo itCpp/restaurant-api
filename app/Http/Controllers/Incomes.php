@@ -50,7 +50,7 @@ class Incomes extends Controller
             ->map(function ($row) {
                 return $this->getIncomeSourceRow($row);
             })
-            ->sortBy('to_sort')
+            ->sortBy('cabinet', SORT_NATURAL)
             ->values()
             ->all();
     }
