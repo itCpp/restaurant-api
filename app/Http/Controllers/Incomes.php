@@ -140,23 +140,111 @@ class Incomes extends Controller
      */
     public function view(Request $request)
     {
+        if (!$source = IncomeSource::find($request->source_id))
+            $source = new IncomeSource;
+
+        $source_id = $source->id ?? $request->source_id;
+
+        $this->purposes = Purposes::collect();
+
         $rows = CashboxTransaction::whereIsIncome(true)
-            ->when((bool) $request->source_id, function ($query) use ($request) {
-                $query->whereIncomeSourceId($request->source_id);
+            ->when((bool) $source_id, function ($query) use ($source_id) {
+                $query->whereIncomeSourceId($source_id);
+            })
+            ->when((bool) $source->date ?? null, function ($query) use ($source) {
+                $query->whereBetween('created_at', [
+                    now()->create($source->date)->startOfDay(),
+                    now()->create($source->date_to ?: now())->endOfDay()
+                ]);
             })
             ->orderBy('id', 'DESC')
             ->get()
-            ->map(function ($row) {
+            ->map(function ($row) use (&$data) {
 
-                $row->source = $this->getSourceInfo($row);
+                $row = $this->getRowCashboxTransaction($row);
+                $data[$row->month][] = $row;
 
                 return $row;
             });
 
         return response()->json([
+            'row' => $source,
             'rows' => $rows,
-            $this->get_source_info ?? [],
+            'data' => collect($data ?? [])->sortKeysDesc()
+                ->map(function ($row, $key) use ($source) {
+
+                    $is_arenda = false;
+                    $is_parking = false;
+                    $is_internet = false;
+
+                    foreach ($row as $value) {
+
+                        if ($value->purpose_pay == 1)
+                            $is_arenda = true;
+
+                        if ($value->purpose_pay == 2)
+                            $is_parking = true;
+
+                        if ($value->purpose_pay == 5)
+                            $is_internet = true;
+                    }
+
+                    if (!$is_arenda)
+                        $row[] = $this->getEmptyRow($source->id, 1, $key);
+
+                    if (!$is_parking)
+                        $row[] = $this->getEmptyRow($source->id, 2, $key);
+
+                    if (!$is_internet)
+                        $row[] = $this->getEmptyRow($source->id, 5, $key);
+
+                    return [
+                        'month' => $key,
+                        'rows' => $row,
+                    ];
+                })
+                ->values()
+                ->all(),
         ]);
+    }
+
+    /**
+     * Формирует строку платежа
+     * 
+     * @param  \App\Models\CashboxTransaction $row
+     * @return \App\Models\CashboxTransaction
+     */
+    public function getRowCashboxTransaction($row)
+    {
+        if (empty($this->purposes))
+            $this->purposes = Purposes::collect();
+
+        $row->source = $this->getSourceInfo($row);
+
+        $purpose = $this->purposes->search(function ($item) use ($row) {
+            return $item['id'] == $row->purpose_pay;
+        });
+        $row->purpose = $this->purposes[$purpose] ?? null;
+
+        return $row;
+    }
+
+    /**
+     * Создает пустую строку платежа
+     * 
+     * @param  int $source_id
+     * @param  int $purpose_pay
+     * @param  string|null $date
+     * @return \App\Models\CashboxTransaction
+     */
+    public function getEmptyRow($source_id, $purpose_pay, $date = null)
+    {
+        $row = new CashboxTransaction;
+        $row->income_source_id = $source_id;
+        $row->purpose_pay = $purpose_pay;
+        $row->date = now()->create($date ?: now())->setDay(20);
+
+        return $this->getRowCashboxTransaction($row);
     }
 
     /**
