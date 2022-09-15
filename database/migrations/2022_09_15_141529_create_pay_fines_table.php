@@ -24,6 +24,7 @@ return new class extends Migration
             $table->date('date')->nullable();
             $table->timestamps();
             $table->index(['source_id', 'is_repay']);
+            $table->index(['source_id', 'date']);
         });
     }
 

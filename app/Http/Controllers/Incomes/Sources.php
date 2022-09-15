@@ -10,6 +10,7 @@ use App\Models\IncomesFile;
 use App\Models\IncomeSource;
 use App\Models\IncomeSourceLog;
 use App\Models\Log;
+use App\Models\PayFine;
 use Illuminate\Http\Request;
 
 class Sources extends Controller
@@ -56,6 +57,13 @@ class Sources extends Controller
 
         $row->to_sort = (int) $row->cabinet == trim($row->cabinet)
             ? (int) $row->cabinet : $row->cabinet;
+
+        $row->fine = PayFine::where('source_id', $row->id)
+            ->where('date', '>=', $row->date)
+            ->when((bool) $row->date_to, function ($query) use ($row) {
+                $query->where('date', '<=', $row->date_to);
+            })
+            ->sum('sum');
 
         return $row;
     }
