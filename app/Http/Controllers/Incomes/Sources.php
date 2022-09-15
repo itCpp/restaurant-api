@@ -94,8 +94,6 @@ class Sources extends Controller
         if ($date > now())
             $date->subMonth();
 
-        $row->date_to = $date;
-
         foreach ($last_every_month as $pay) {
 
             if ($date > now()->create($pay->date)->addMonth())
