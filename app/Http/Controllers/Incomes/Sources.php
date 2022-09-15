@@ -51,7 +51,7 @@ class Sources extends Controller
 
         $row->files_count = IncomesFile::whereIncomeId($row->id)->count();
 
-        $row->overdue = $this->checkOverdue($row);
+        $row->overdue = $this->checkOverdueAndFindNextPays($row);
 
         $row->to_sort = (int) $row->cabinet == trim($row->cabinet)
             ? (int) $row->cabinet : $row->cabinet;
@@ -60,15 +60,18 @@ class Sources extends Controller
     }
 
     /**
-     * Проверяет просрочку оплаты
+     * Проверяет просрочку оплаты и определяет даты следующих платежей
      * 
      * @param  \App\Models\IncomeSource $row
      * @return bool
      */
-    public static function checkOverdue(&$row)
+    public static function checkOverdueAndFindNextPays(&$row)
     {
         /** Ежемесячные платежи */
         $last_every_month = [];
+
+        /** Следующие платежи */
+        $next_pays = [];
 
         foreach (Purposes::getEveryMonthId() as $value) {
 
@@ -84,23 +87,48 @@ class Sources extends Controller
         }
 
         $row->last_every_month = $last_every_month;
+        $row->pay_day = $pay_day = $row->settings['pay_day'] ?? false;
 
         if ($row->is_free)
             return false;
 
-        $pay_day = $row->settings['pay_day'] ?? false;
         $date = now()->setDay($pay_day ?: 20);
+        $next_date = $date->copy();
 
         if ($date > now())
             $date->subMonth();
 
+        if ($next_date < now())
+            $next_date->addMonth();
+
+        $next_pays[] = [
+            'date' => $next_date,
+            'price' => round(((int) $row->price * (int) $row->space), 2),
+            'type' => 1,
+            'icon' => "building",
+        ];
+
+        if ($row->is_parking) {
+            $next_pays[] = [
+                'date' => $next_date,
+                'price' => $row->settings['parking_price'] ?? 0,
+                'type' => 2,
+                'icon' => "car",
+                'title' => "Аренда парковки",
+            ];
+        }
+
+        $row->next_pays = $next_pays;
+
+        $overdue = false;
+
         foreach ($last_every_month as $pay) {
 
             if ($date > now()->create($pay->date)->addMonth())
-                return true;
+                $overdue = true;
         }
 
-        return false;
+        return $overdue;
     }
 
     /**
