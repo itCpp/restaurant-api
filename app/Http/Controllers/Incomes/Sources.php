@@ -51,6 +51,9 @@ class Sources extends Controller
             ->orderBy('date', "DESC")
             ->first();
 
+        if ($row->last and $row->date > ($row->last->date ?? null))
+            $row->last->is_prev = true;
+
         $row->files_count = IncomesFile::whereIncomeId($row->id)->count();
 
         $row->overdue = $this->checkOverdueAndFindNextPays($row);
