@@ -49,6 +49,7 @@ class Employees extends Controller
 
         $salary = EmployeeSalary::whereEmployeeId($row->id)->orderBy('start_date', "DESC")->first();
         $row->salary = $salary->salary ?? 0;
+        $row->salary_date = $salary ? now()->format("Y-m-d") : $row->date_work_start;
 
         if (is_array($row->personal_data)) {
             foreach ($row->personal_data as $key => $value) {
@@ -135,7 +136,9 @@ class Employees extends Controller
         Log::write($row, $request);
 
         EmployeeWorkDate::checkAndChangeWorkDate(
-            $row->id, $request->date_work_start, $request->date_work_stop
+            $row->id,
+            $request->date_work_start,
+            $request->date_work_stop
         );
 
         return response()->json(

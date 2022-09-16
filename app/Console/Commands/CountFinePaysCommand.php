@@ -15,7 +15,7 @@ class CountFinePaysCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'checkpayfine';
+    protected $signature = 'pays:fine';
 
     /**
      * The console command description.

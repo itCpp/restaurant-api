@@ -17,7 +17,11 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
 
-        $schedule->command('checkpayfine')
+        $schedule->command('pays:overdue')
+            ->dailyAt("01:00")
+            ->runInBackground();
+
+        $schedule->command('pays:fine')
             ->dailyAt("23:59")
             ->runInBackground();
     }

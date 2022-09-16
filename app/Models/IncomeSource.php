@@ -28,6 +28,8 @@ class IncomeSource extends Model
         'date_to',
         'is_free',
         'is_parking',
+        'is_internet',
+        'is_overdue',
         'settings',
     ];
 
@@ -38,8 +40,10 @@ class IncomeSource extends Model
      */
     protected $casts = [
         'date' => "date:Y-m-d",
-        'settings' => AsCollection::class,
         'is_free' => "boolean",
         'is_parking' => "boolean",
+        'is_internet' => "boolean",
+        'is_overdue' => "boolean",
+        'settings' => AsCollection::class,
     ];
 }

@@ -133,15 +133,45 @@ class Incomes extends Controller
     }
 
     /**
+     * Проверяет платежи и определяет хотябы один просроченный платеж
+     * 
+     * @param  \App\Models\IncomeSource $row
+     * @return boolean
+     */
+    public function isOverdue($row)
+    {
+        $months = $this->view(new Request, $row);
+        $month_end = now()->format("Y-m");
+
+        foreach ($months as $data) {
+
+            foreach ($data['rows'] as $pay) {
+
+                if ($data['month'] < $month_end and ($pay->purpose_every_month ?? null) and !($pay->sum ?? 0))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Вывод строк выплаты
      * 
      * @param  \Illuminate\Http\Request $request
+     * @param  \App\Models\IncomeSource|null $source
      * @return \Illuminate\Http\JsonResponse
      */
-    public function view(Request $request)
+    public function view(Request $request, $source = null)
     {
-        if (!$source = IncomeSource::find($request->source_id))
-            $source = new IncomeSource;
+        $toArray = false;
+
+        if ($source instanceof IncomeSource) {
+            $toArray = true;
+        } else {
+            if (!$source = IncomeSource::find($request->source_id))
+                $source = new IncomeSource;
+        }
 
         $source_id = $source->id ?? $request->source_id;
 
@@ -152,7 +182,7 @@ class Incomes extends Controller
                 $query->whereIncomeSourceId($source_id);
             })
             ->when((bool) $source->date ?? null, function ($query) use ($source) {
-                $query->whereBetween('created_at', [
+                $query->whereBetween('date', [
                     now()->create($source->date)->startOfDay(),
                     now()->create($source->date_to ?: now())->endOfDay()
                 ]);
@@ -168,8 +198,9 @@ class Incomes extends Controller
             });
 
         $date_check = now()->create($source->date ?? now());
+        $month_end = (int) now()->format("d") >= 20 ? now()->format("Y-m") : now()->subMonth()->format("Y-m");
 
-        while ($date_check->format("Y-m") <= now()->format("Y-m")) {
+        while ($date_check->format("Y-m") <= $month_end) {
 
             $month = $date_check->format("Y-m");
 
@@ -180,55 +211,60 @@ class Incomes extends Controller
             $date_check->addMonth();
         }
 
+        $response_data = collect($data ?? [])->sortKeysDesc()
+            ->map(function ($row, $key) use ($source) {
+
+                $is_arenda = false;
+                $is_parking = false;
+                $is_internet = false;
+
+                foreach ($row as $value) {
+
+                    if ($value->purpose_pay == 1)
+                        $is_arenda = true;
+
+                    if ($value->purpose_pay == 2)
+                        $is_parking = true;
+
+                    if ($value->purpose_pay == 5)
+                        $is_internet = true;
+                }
+
+                if (!$is_arenda) {
+                    $row[] = $this->getEmptyRow($source->id, 1, $key);
+                }
+
+                if (!$is_parking) {
+
+                    $new_row = $this->getEmptyRow($source->id, 2, $key);
+
+                    if ($source->is_parking ?? null)
+                        $row[] = $new_row;
+                }
+
+                if (!$is_internet) {
+
+                    $new_row = $this->getEmptyRow($source->id, 5, $key);
+
+                    if ($source->is_internet ?? null)
+                        $row[] = $new_row;
+                }
+
+                return [
+                    'month' => $key,
+                    'rows' => $row,
+                ];
+            })
+            ->values()
+            ->all();
+
+        if ($toArray)
+            return $response_data;
+
         return response()->json([
             'row' => $source,
             'rows' => $rows,
-            'data' => collect($data ?? [])->sortKeysDesc()
-                ->map(function ($row, $key) use ($source) {
-
-                    $is_arenda = false;
-                    $is_parking = false;
-                    $is_internet = false;
-
-                    foreach ($row as $value) {
-
-                        if ($value->purpose_pay == 1)
-                            $is_arenda = true;
-
-                        if ($value->purpose_pay == 2)
-                            $is_parking = true;
-
-                        if ($value->purpose_pay == 5)
-                            $is_internet = true;
-                    }
-
-                    if (!$is_arenda) {
-                        $row[] = $this->getEmptyRow($source->id, 1, $key);
-                    }
-
-                    if (!$is_parking) {
-
-                        $new_row = $this->getEmptyRow($source->id, 2, $key);
-
-                        if ($source->is_parking ?? null)
-                            $row[] = $new_row;
-                    }
-
-                    if (!$is_internet) {
-
-                        $new_row = $this->getEmptyRow($source->id, 5, $key);
-
-                        if ($source->is_internet ?? null)
-                            $row[] = $new_row;
-                    }
-
-                    return [
-                        'month' => $key,
-                        'rows' => $row,
-                    ];
-                })
-                ->values()
-                ->all(),
+            'data' => $response_data,
         ]);
     }
 
@@ -249,6 +285,12 @@ class Incomes extends Controller
             return $item['id'] == $row->purpose_pay;
         });
         $row->purpose = $this->purposes[$purpose] ?? null;
+
+        if (is_array($row->purpose)) {
+            foreach ($row->purpose as $key => $value) {
+                $row->{"purpose_" . $key} = $value;
+            }
+        }
 
         return $row;
     }
