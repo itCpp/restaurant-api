@@ -99,6 +99,9 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Загрузка нового файла */
         Route::post('file/upload', [App\Http\Controllers\Incomes\Files::class, "upload"]);
 
+        /** Скрыть просроченный платеж */
+        Route::post('setHideOverdue', [App\Http\Controllers\Incomes::class, "setHideOverdue"]);
+
         /** Разделы */
         Route::group(['prefix' => "part"], function () {
 

@@ -9,6 +9,7 @@ use App\Models\IncomePart;
 use App\Models\IncomeSource;
 use App\Models\IncomeSourceLog;
 use App\Models\Log;
+use App\Models\OverdueException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 
@@ -123,7 +124,7 @@ class Incomes extends Controller
         $row->month = now()->create($row->date)->format("Y-m");
         $row->user_id = $request->user()->id;
 
-        if ($row->date < $source->date) {
+        if (now()->create($row->date)->startOfDay() < now()->create($source->date)->startOfDay()) {
             $date_format = now()->create($source->date)->format("d.m.Y");
             return response()->json(['message' => "Дата платежа раньше даты начала аренды ({$date_format})"], 400);
         }
@@ -155,7 +156,7 @@ class Incomes extends Controller
 
             foreach ($data['rows'] as $pay) {
 
-                if ($data['month'] < $month_end and ($pay->purpose_every_month ?? null) and !($pay->sum ?? 0))
+                if ($data['month'] < $month_end and ($pay->purpose_every_month ?? null) and !($pay->sum ?? 0) and !($pay->hide_overdue ?? null))
                     return true;
             }
         }
@@ -207,6 +208,7 @@ class Incomes extends Controller
 
         $date_check = now()->create($source->date ?? now());
         $month_end = (int) now()->format("d") >= 20 ? now()->format("Y-m") : now()->subMonth()->format("Y-m");
+        $months = [];
 
         while ($date_check->format("Y-m") <= $month_end) {
 
@@ -216,11 +218,21 @@ class Incomes extends Controller
                 $data[$month] = [];
             }
 
+            $months[] = $month;
             $date_check->addMonth();
         }
 
+        $hide_overdues = [];
+        
+        OverdueException::where('source_id', $source_id)
+            ->whereIn('month', $months)
+            ->get()
+            ->each(function ($row) use (&$hide_overdues) {
+                $hide_overdues[$row->month][$row->purpose_id] = true;
+            });
+
         $response_data = collect($data ?? [])->sortKeysDesc()
-            ->map(function ($row, $key) use ($source) {
+            ->map(function ($row, $key) use ($source, $hide_overdues) {
 
                 $is_arenda = false;
                 $is_parking = false;
@@ -256,6 +268,10 @@ class Incomes extends Controller
 
                     if ($source->is_internet ?? null)
                         $row[] = $new_row;
+                }
+
+                foreach ($row as &$value) {
+                    $value->hide_overdue = $hide_overdues[$key][$value->purpose_id ?? null] ?? null;
                 }
 
                 return [
@@ -370,5 +386,49 @@ class Incomes extends Controller
         return IncomeSourceLog::whereSourceId($id)
             ->where('change_date', '>', $date)
             ->first();
+    }
+
+    /**
+     * Скрывает просроченный платеж
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setHideOverdue(Request $request)
+    {
+        $row = OverdueException::where([
+            ['source_id', $request->source_id],
+            ['purpose_id', $request->purpose],
+            ['month', $request->month],
+        ])->first();
+
+        if ($row) {
+
+            $row->delete();
+
+            $hide_overdue = false;
+        } else {
+
+            $row = OverdueException::create([
+                'source_id' => $request->source_id,
+                'purpose_id' => $request->purpose,
+                'month' => $request->month,
+            ]);
+
+            $hide_overdue = true;
+        }
+
+        Artisan::call("pays:overdue {$request->source_id}");
+
+        return response()->json([
+            'month' => $request->month,
+            'row' => [
+                'purpose_id' => $request->purpose,
+                'hide_overdue' => $hide_overdue,
+            ],
+            'source' => (new Sources)->getIncomeSourceRow(
+                IncomeSource::firstOrNew(['id' => $request->source_id])
+            ),
+        ]);
     }
 }

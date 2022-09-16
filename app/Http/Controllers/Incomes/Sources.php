@@ -51,8 +51,11 @@ class Sources extends Controller
             ->orderBy('date', "DESC")
             ->first();
 
-        if ($row->last and $row->date > ($row->last->date ?? null))
-            $row->last->is_prev = true;
+        if ($row->last and $row->date) {
+            if (now()->create($row->date)->startOfDay() > now()->create($row->last->date ?: now())->startOfDay()) {
+                $row->last->is_prev = true;
+            }
+        }
 
         $row->files_count = IncomesFile::whereIncomeId($row->id)->count();
 
