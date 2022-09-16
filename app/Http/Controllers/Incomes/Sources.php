@@ -221,6 +221,7 @@ class Sources extends Controller
         $row->is_parking = (bool) $request->is_parking;
         $row->is_internet = (bool) $request->is_internet;
         $row->settings = $request->settings ?? [];
+        $row->is_overdue = (bool) (new Incomes)->isOverdue($row);
 
         $row->save();
 

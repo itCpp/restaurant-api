@@ -10,6 +10,7 @@ use App\Models\IncomeSource;
 use App\Models\IncomeSourceLog;
 use App\Models\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 
 class Incomes extends Controller
 {
@@ -82,7 +83,7 @@ class Incomes extends Controller
     }
 
     /**
-     * Созраняет данные строки
+     * Сохраняет данные строки
      * 
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -122,9 +123,16 @@ class Incomes extends Controller
         $row->month = now()->create($row->date)->format("Y-m");
         $row->user_id = $request->user()->id;
 
+        if ($row->date < $source->date) {
+            $date_format = now()->create($source->date)->format("d.m.Y");
+            return response()->json(['message' => "Дата платежа раньше даты начала аренды ({$date_format})"], 400);
+        }
+
         $row->save();
 
         Log::write($row, $request);
+
+        Artisan::call("pays:overdue {$row->income_source_id}");
 
         return response()->json([
             'row' => $row,
