@@ -88,6 +88,15 @@ class Sources extends Controller
 
             $last = CashboxTransaction::whereIncomeSourceId($row->id)
                 ->wherePurposePay($value)
+                ->when((bool) $row->date, function ($query) use ($row) {
+                    $query->where('date', '>=', $row->date)
+                        ->where(function ($query) use ($row) {
+                            $query->when((bool) $row->date_to, function ($query) use ($row) {
+                                $query->where('date', '<=', $row->date_to);
+                            })
+                                ->orWhere('date', null);
+                        });
+                })
                 ->orderBy('date', "DESC")
                 ->first();
 
