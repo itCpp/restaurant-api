@@ -85,24 +85,24 @@ class Sources extends Controller
     public static function checkOverdueAndFindNextPays(&$row)
     {
         /** Ежемесячные платежи */
-        $last_every_month = [];
+        $last_every_month = $last_months = [];
 
         /** Следующие платежи */
         $next_pays = [];
+
+        $pay_day = $pay_day = $row->settings['pay_day'] ?? false;
+        $row->pay_day = $pay_day ?: 20;
+
+        $date_last_to = (int) now()->format('d') >= $row->pay_day
+            ? now()->addMonth()->setDay(20)->format("Y-m-d")
+            : now()->setDay(20)->format("Y-m-d");
 
         foreach (Purposes::getEveryMonthId() as $value) {
 
             $last = CashboxTransaction::whereIncomeSourceId($row->id)
                 ->wherePurposePay($value)
-                ->when((bool) $row->date, function ($query) use ($row) {
-                    $query->where('date', '>=', $row->date)
-                        ->where(function ($query) use ($row) {
-                            $query->when((bool) $row->date_to, function ($query) use ($row) {
-                                $query->where('date', '<=', $row->date_to);
-                            })
-                                ->orWhere('date', null);
-                        });
-                })
+                ->where('date', '>=', $row->date ?? now())
+                ->where('date', '<=', $date_last_to)
                 ->orderBy('date', "DESC")
                 ->first();
 
@@ -110,15 +110,16 @@ class Sources extends Controller
                 continue;
 
             $last_every_month[] = $last;
+            $last_months[$value][] = now()->create($last->date)->format("Y-m");
         }
 
         $row->last_every_month = $last_every_month;
-        $row->pay_day = $pay_day = $row->settings['pay_day'] ?? false;
+        $row->last_months = $last_months;
 
         if ($row->is_free)
             return false;
 
-        $date = now()->setDay($pay_day ?: 20);
+        $date = now()->setDay($row->pay_day);
         $next_date = $date->copy();
 
         if ($date > now())
@@ -127,15 +128,19 @@ class Sources extends Controller
         if ($next_date < now())
             $next_date->addMonth();
 
-        $next_pays[] = [
-            'date' => $next_date,
-            'price' => round(((float) $row->price * (float) $row->space), 2),
-            'type' => 1,
-            'icon' => "building",
-            'title' => "Аренда помещения",
-        ];
+        $check_month = $next_date->copy()->format("Y-m");
 
-        if ($row->is_parking) {
+        if (!in_array($check_month, $last_months[1] ?? [])) {
+            $next_pays[] = [
+                'date' => $next_date,
+                'price' => round(((float) $row->price * (float) $row->space), 2),
+                'type' => 1,
+                'icon' => "building",
+                'title' => "Аренда помещения",
+            ];
+        }
+
+        if ($row->is_parking and !in_array($check_month, $last_months[2] ?? [])) {
             $next_pays[] = [
                 'date' => $next_date,
                 'price' => $row->settings['parking_price'] ?? 0,
@@ -145,7 +150,7 @@ class Sources extends Controller
             ];
         }
 
-        if ($row->is_internet) {
+        if ($row->is_internet and !in_array($check_month, $last_months[5] ?? [])) {
             $next_pays[] = [
                 'date' => $next_date,
                 'price' => $row->settings['internet_price'] ?? 0,

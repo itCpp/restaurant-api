@@ -137,6 +137,7 @@ class Incomes extends Controller
 
         return response()->json([
             'row' => $row,
+            'pay' => $this->getRowCashboxTransaction($row),
             'source' => $this->getIncomeSourceRow($source),
         ]);
     }
@@ -191,10 +192,14 @@ class Incomes extends Controller
                 $query->whereIncomeSourceId($source_id);
             })
             ->when((bool) $source->date ?? null, function ($query) use ($source) {
-                $query->whereBetween('date', [
-                    now()->create($source->date)->startOfDay(),
-                    now()->create($source->date_to ?: now())->endOfDay()
-                ]);
+                $query->where('date', '>=', $source->date);
+                // $query->whereBetween('date', [
+                //     now()->create($source->date)->startOfDay(),
+                //     now()->create($source->date_to ?: now())->endOfDay()
+                // ]);
+            })
+            ->when((bool) $source->date_to ?? null, function ($query) use ($source) {
+                $query->where('date', '<=', $source->date_to);
             })
             ->orderBy('id', 'DESC')
             ->get()
@@ -207,7 +212,15 @@ class Incomes extends Controller
             });
 
         $date_check = now()->create($source->date ?? now());
-        $month_end = (int) now()->format("d") >= 20 ? now()->format("Y-m") : now()->subMonth()->format("Y-m");
+
+        $day_x = 20;
+        $month_end = (int) now()->format("d") >= $day_x
+            ? now()->format("Y-m")
+            : now()->subMonth()->format("Y-m");
+
+        if ($request->toLastMonth)
+            $month_end = now()->format("Y-m");
+
         $months = [];
 
         while ($date_check->format("Y-m") <= $month_end) {
@@ -223,13 +236,19 @@ class Incomes extends Controller
         }
 
         $hide_overdues = [];
-        
+
         OverdueException::where('source_id', $source_id)
             ->whereIn('month', $months)
             ->get()
             ->each(function ($row) use (&$hide_overdues) {
                 $hide_overdues[$row->month][$row->purpose_id] = true;
             });
+
+        if ((int) now()->format("d") < $day_x) {
+            $month = now()->format("Y-m");
+            foreach ($this->purposes as $p)
+                $hide_overdues[$month][$p['id']] = true;
+        }
 
         $response_data = collect($data ?? [])->sortKeysDesc()
             ->map(function ($row, $key) use ($source, $hide_overdues) {

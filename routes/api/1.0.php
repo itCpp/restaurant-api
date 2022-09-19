@@ -127,4 +127,11 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Данные сотрудника */
         Route::get('get', [App\Http\Controllers\Employees::class, "get"]);
     });
+
+    /** Личная страница арендатора */
+    Route::group(['prefix' => "tenant"], function () {
+
+        /** Основные данные */
+        Route::post('get', [App\Http\Controllers\Tenants::class, "get"]);
+    });
 });

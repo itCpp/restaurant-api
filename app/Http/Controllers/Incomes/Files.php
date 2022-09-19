@@ -15,21 +15,30 @@ class Files extends ControllersFiles
     /**
      * Список файлов по расходу
      * 
-     * @param  \Illumniate\Http\Request $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
-        $files = IncomesFile::whereIncomeId($request->id)
+        return response()->json([
+            'files' => $this->getFilesList($request),
+        ]);
+    }
+
+    /**
+     * Список файлов
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getFilesList(Request $request)
+    {
+        return IncomesFile::whereIncomeId($request->id)
             ->orderBy('id', "DESC")
             ->get()
             ->map(function ($row) {
                 return $this->getFileRow($row);
             });
-
-        return response()->json([
-            'files' => $files,
-        ]);
     }
 
     /**
