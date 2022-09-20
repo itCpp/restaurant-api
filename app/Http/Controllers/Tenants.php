@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Incomes\Files;
 use App\Http\Controllers\Incomes\Purposes;
 use App\Http\Controllers\Incomes\Sources;
+use App\Models\CashboxTransaction;
 use App\Models\IncomePart;
 use App\Models\IncomeSource;
 use App\Models\Log;
@@ -30,6 +31,9 @@ class Tenants extends Controller
 
         $row = (new Sources)->getIncomeSourceRow($row);
 
+        $row->is_deposit = $this->checkPurposeTypePay(3, $row);
+        $row->is_legal_address = $this->checkPurposeTypePay(4, $row);
+
         $pays = (new Incomes)->view($request, $row);
 
         $files = (new Files($request))->getFilesList($request);
@@ -40,6 +44,27 @@ class Tenants extends Controller
             'files' => $files,
             'purposes' => Purposes::getAll(),
         ]);
+    }
+
+    /**
+     * Определяет наличие платежа
+     * 
+     * @param  int $purpose_id
+     * @param  \App\Models\CashboxTransaction $source
+     * @return boolean
+     */
+    public function checkPurposeTypePay($purpose_id, $source)
+    {
+        return (bool) CashboxTransaction::whereIsIncome(true)
+            ->whereIncomeSourceId($source->id)
+            ->wherePurposePay($purpose_id)
+            ->when((bool) $source->date, function ($query) use ($source) {
+                $query->where('date', '>=', $source->date);
+            })
+            ->when((bool) $source->date_to, function ($query) use ($source) {
+                $query->where('date', '>=', $source->date_to);
+            })
+            ->count();
     }
 
     /**
