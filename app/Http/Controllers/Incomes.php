@@ -251,7 +251,10 @@ class Incomes extends Controller
         }
 
         $response_data = collect($data ?? [])->sortKeysDesc()
-            ->map(function ($row, $key) use ($source, $hide_overdues) {
+            ->map(function ($row, $key) use ($source, $hide_overdues, $day_x) {
+
+                if (now()->create($key)->setDay($day_x) < now()->create($source->date))
+                    $day_x = (int) now()->create($source->date)->format("d");
 
                 $is_arenda = false;
                 $is_parking = false;
@@ -270,12 +273,12 @@ class Incomes extends Controller
                 }
 
                 if (!$is_arenda) {
-                    $row[] = $this->getEmptyRow($source->id, 1, $key);
+                    $row[] = $this->getEmptyRow($source->id, 1, $key, $day_x);
                 }
 
                 if (!$is_parking) {
 
-                    $new_row = $this->getEmptyRow($source->id, 2, $key);
+                    $new_row = $this->getEmptyRow($source->id, 2, $key, $day_x);
 
                     if ($source->is_parking ?? null)
                         $row[] = $new_row;
@@ -283,7 +286,7 @@ class Incomes extends Controller
 
                 if (!$is_internet) {
 
-                    $new_row = $this->getEmptyRow($source->id, 5, $key);
+                    $new_row = $this->getEmptyRow($source->id, 5, $key, $day_x);
 
                     if ($source->is_internet ?? null)
                         $row[] = $new_row;
@@ -344,14 +347,15 @@ class Incomes extends Controller
      * @param  int $source_id
      * @param  int $purpose_pay
      * @param  string|null $date
+     * @param  string|null $day_x
      * @return \App\Models\CashboxTransaction
      */
-    public function getEmptyRow($source_id, $purpose_pay, $date = null)
+    public function getEmptyRow($source_id, $purpose_pay, $date = null, $day_x = null)
     {
         $row = new CashboxTransaction;
         $row->income_source_id = $source_id;
         $row->purpose_pay = $purpose_pay;
-        $row->date = now()->create($date ?: now())->setDay(20);
+        $row->date = now()->create($date ?: now())->setDay($day_x ?: 20)->format("Y-m-d");
 
         return $this->getRowCashboxTransaction($row);
     }
