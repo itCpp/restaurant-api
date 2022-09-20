@@ -26,12 +26,33 @@ class Incomes extends Controller
         $rows = IncomePart::whereBuildingId($request->id)
             ->get()
             ->map(function ($row) {
-
                 $row->rows = $this->getSourcesPart($row->id);
-
                 return $row;
             })
             ->toArray();
+
+        if ((int) $request->id == 3) {
+
+            $parking_sources = IncomeSource::select("part_id")
+                ->where('is_parking', true)
+                ->distinct()
+                ->get()
+                ->map(function ($row) {
+                    return $row->part_id;
+                })
+                ->toArray();
+
+            foreach ($parking_sources as $part_id) {
+
+                $part = IncomePart::find($part_id);
+
+                $rows[] = [
+                    'name' => $part->name ?? null,
+                    'comment' => $part->comment ?? null,
+                    'rows' => $this->getSourcesPart($part_id, true),
+                ];
+            }
+        }
 
         return response()->json([
             'rows' => $rows,
@@ -42,11 +63,15 @@ class Incomes extends Controller
      * Выводит строки источников
      * 
      * @param  int $id
+     * @param  boolean $is_parking
      * @return array
      */
-    public function getSourcesPart($id)
+    public function getSourcesPart($id, $is_parking = false)
     {
         return IncomeSource::wherePartId($id)
+            ->when($is_parking, function ($query) {
+                $query->where('is_parking', true);
+            })
             ->orderBy('cabinet')
             ->get()
             ->map(function ($row) {
