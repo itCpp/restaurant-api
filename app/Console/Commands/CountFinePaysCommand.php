@@ -32,7 +32,7 @@ class CountFinePaysCommand extends Command
     public function handle()
     {
         /** Пеня с 20 сентября 2022 года */
-        if (now()->format("Y-m-d") < "2022-09-20")
+        if (now()->format("Y-m-d") < env("DATE_TO_START_FINE", "2022-09-20"))
             return 0;
 
         $this->incomes = new Incomes;

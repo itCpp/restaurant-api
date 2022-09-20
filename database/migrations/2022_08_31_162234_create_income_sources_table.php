@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('part_id')->nullable()->index();
             $table->string('name')->nullable()->comment("Наименование организации");
-            $table->bigInteger('inn')->nullable()->comment("ИНН организации");
+            $table->string('inn')->nullable()->comment("ИНН организации");
             $table->string('contact_person')->nullable()->comment("ФИО контактного лица");
             $table->string('contact_number')->nullable()->comment("Телефон для связи");
             $table->float('space')->nullable()->comment("Площадь помещения");

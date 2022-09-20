@@ -224,7 +224,7 @@ class Sources extends Controller
             $row = new IncomeSource;
 
         $request->validate([
-            'inn' => "nullable|numeric",
+            'inn' => "nullable|string",
         ]);
 
         $row->part_id = $request->part_id;
