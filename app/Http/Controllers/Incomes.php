@@ -320,8 +320,13 @@ class Incomes extends Controller
 
                     $new_row = $this->getEmptyRow($source->id, 5, $key, $day_x);
 
-                    if ($source->is_internet ?? null)
-                        $row[] = $new_row;
+                    if ($source->is_internet ?? null) {
+
+                        $internet_date = now()->create($source->settings['internet_date'] ?? $source->date)->format("Y-m-d");
+
+                        if ($internet_date < $date_x)
+                            $row[] = $new_row;
+                    }
                 }
 
                 foreach ($row as &$value) {
