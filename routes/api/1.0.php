@@ -136,5 +136,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Основные данные */
         Route::post('get', [App\Http\Controllers\Tenants::class, "get"]);
+
+        /** Отправка в архив */
+        Route::post('drop', [App\Http\Controllers\Tenants::class, "drop"]);
     });
 });
