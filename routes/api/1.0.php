@@ -129,6 +129,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Данные сотрудника */
         Route::get('get', [App\Http\Controllers\Employees::class, "get"]);
+
+        /** Применение нового оклада */
+        Route::post('salary/set', [App\Http\Controllers\Employees\Salaries::class, "set"]);
     });
 
     /** Личная страница арендатора */
