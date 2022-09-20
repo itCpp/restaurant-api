@@ -281,6 +281,8 @@ class Incomes extends Controller
                 if (now()->create($key)->setDay($day_x) < now()->create($source->date))
                     $day_x = (int) now()->create($source->date)->format("d");
 
+                $date_x = now()->create($key)->setDay($day_x)->format("Y-m-d");
+
                 $is_arenda = false;
                 $is_parking = false;
                 $is_internet = false;
@@ -305,8 +307,13 @@ class Incomes extends Controller
 
                     $new_row = $this->getEmptyRow($source->id, 2, $key, $day_x);
 
-                    if ($source->is_parking ?? null)
-                        $row[] = $new_row;
+                    if ($source->is_parking ?? null) {
+
+                        $date_parking = now()->create($source->settings['parking_date'] ?? $source->date)->format("Y-m-d");
+
+                        if ($date_parking < $date_x)
+                            $row[] = $new_row;
+                    }
                 }
 
                 if (!$is_internet) {
