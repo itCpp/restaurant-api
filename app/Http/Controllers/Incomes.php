@@ -439,6 +439,8 @@ class Incomes extends Controller
 
         Artisan::call("pays:overdue {$request->source_id}");
 
+        Log::write($row, $request);
+
         return response()->json([
             'month' => $request->month,
             'row' => [
@@ -448,6 +450,29 @@ class Incomes extends Controller
             'source' => (new Sources)->getIncomeSourceRow(
                 IncomeSource::firstOrNew(['id' => $request->source_id])
             ),
+        ]);
+    }
+
+    /**
+     * Удаление платежа
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function drop(Request $request)
+    {
+        if (!$row = CashboxTransaction::find($request->id))
+            return response()->json(['message' => "Платеж не найден или уже удалён"], 400);
+
+        $row->delete();
+
+        Artisan::call("pays:overdue {$row->income_source_id}");
+
+        Log::write($row, $request);
+
+        return response()->json([
+            'month' => $row->month,
+            'row' => $row,
         ]);
     }
 }

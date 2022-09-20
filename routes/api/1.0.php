@@ -84,6 +84,9 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Save data income row */
         Route::post('save', [App\Http\Controllers\Incomes::class, "save"]);
 
+        /** Удаление платежа */
+        Route::post('drop', [App\Http\Controllers\Incomes::class, "drop"]);
+
         /** Выводит список помещений */
         Route::post('sources', [App\Http\Controllers\Incomes\Sources::class, "index"]);
 
