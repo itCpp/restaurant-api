@@ -232,7 +232,7 @@ class Sources extends Controller
         $row->inn = $request->inn;
         $row->contact_person = $request->contact_person;
         $row->contact_number = $request->contact_number;
-        $row->space = $request->space;
+        $row->space = (float) $request->space;
         $row->cabinet = $request->cabinet;
         $row->price = $request->price;
         $row->date = $request->date;
