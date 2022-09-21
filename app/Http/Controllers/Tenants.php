@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Incomes\Files;
+use App\Http\Controllers\Incomes\Parking;
 use App\Http\Controllers\Incomes\Purposes;
 use App\Http\Controllers\Incomes\Sources;
 use App\Models\CashboxTransaction;
@@ -33,6 +34,8 @@ class Tenants extends Controller
 
         $row->is_deposit = $this->checkPurposeTypePay(3, $row);
         $row->is_legal_address = $this->checkPurposeTypePay(4, $row);
+
+        $row->parking = (new Parking)->getParkingList($row->id);
 
         $pays = (new Incomes)->view($request, $row);
 

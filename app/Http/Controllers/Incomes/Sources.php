@@ -218,6 +218,7 @@ class Sources extends Controller
         if ($request->id and !$row)
             return response()->json(['message' => "Данные о помещении не найдены"], 400);
 
+        /** Логирование до изменения! */
         if ($row)
             IncomeSourceLog::log($request, $row);
         else

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Incomes\Parking;
+use App\Http\Controllers\Incomes\Pays;
 use App\Http\Controllers\Incomes\Purposes;
 use App\Http\Controllers\Incomes\Sources;
 use App\Models\CashboxTransaction;
@@ -180,6 +181,8 @@ class Incomes extends Controller
      */
     public function view(Request $request, $source = null)
     {
+        return (new Pays)->index($request, $source);
+
         $toArray = false;
 
         if ($source instanceof IncomeSource) {
@@ -191,6 +194,9 @@ class Incomes extends Controller
 
         $source_id = $source->id ?? $request->source_id;
 
+        if ($source->is_parking ?? null)
+            $source->parking = (new Parking)->getParkingList($source_id);
+
         $this->purposes = Purposes::collect();
 
         $rows = CashboxTransaction::whereIsIncome(true)
@@ -199,10 +205,6 @@ class Incomes extends Controller
             })
             ->when((bool) $source->date ?? null, function ($query) use ($source) {
                 $query->where('date', '>=', $source->date);
-                // $query->whereBetween('date', [
-                //     now()->create($source->date)->startOfDay(),
-                //     now()->create($source->date_to ?: now())->endOfDay()
-                // ]);
             })
             ->when((bool) $source->date_to ?? null, function ($query) use ($source) {
                 $query->where('date', '<=', $source->date_to);
@@ -219,7 +221,8 @@ class Incomes extends Controller
 
         $date_check = now()->create($source->date ?? now());
 
-        $day_x = 20;
+        $day_x = $source->settings['pay_day'] ?? 20;
+
         $month_end = (int) now()->format("d") >= $day_x
             ? now()->format("Y-m")
             : now()->subMonth()->format("Y-m");
@@ -259,6 +262,7 @@ class Incomes extends Controller
         $response_data = collect($data ?? [])->sortKeysDesc()
             ->map(function ($row, $key) use ($source, $hide_overdues, $day_x) {
 
+                /** Смещение даты оплаты, если аренда началась позже */
                 if (now()->create($key)->setDay($day_x) < now()->create($source->date))
                     $day_x = (int) now()->create($source->date)->format("d");
 
@@ -280,20 +284,23 @@ class Incomes extends Controller
                         $is_internet = true;
                 }
 
-                if (!$is_arenda) {
+                if (!$is_arenda and $source->is_rent) {
                     $row[] = $this->getEmptyRow($source->id, 1, $key, $day_x);
                 }
 
                 if (!$is_parking) {
 
-                    $new_row = $this->getEmptyRow($source->id, 2, $key, $day_x);
-
                     if ($source->is_parking ?? null) {
 
-                        $date_parking = now()->create($source->settings['parking_date'] ?? $source->date)->format("Y-m-d");
+                        $new_row = $this->getEmptyRow($source->id, 2, $key, $day_x);
 
-                        if ($date_parking < $date_x)
-                            $row[] = $new_row;
+                        foreach ($source->parking ?? [] as $parking) {
+
+                            $date_parking = now()->create($parking->date_from ?? $source->date)->format("Y-m-d");
+
+                            if ($date_parking < $date_x)
+                                $row[] = $new_row;
+                        }
                     }
                 }
 

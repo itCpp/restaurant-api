@@ -39,14 +39,27 @@ class Parking extends Controller
      */
     public function source(IncomeSource $row)
     {
-        $row->parking = IncomeSourceParking::whereSourceId($row->id)
+        $row->parking = $this->getParkingList($row->id);
+
+        return $row;
+    }
+
+    /**
+     * Выводит строки арендуемых машиномест
+     * 
+     * @param  int $source_id
+     * @return array
+     */
+    public function getParkingList($source_id)
+    {
+        return IncomeSourceParking::whereSourceId($source_id)
             ->get()
             ->map(function ($row) {
                 return $this->parking($row);
             })
-            ->toArray();
-
-        return $row;
+            ->sortBy('parking_place', SORT_NATURAL)
+            ->values()
+            ->all();
     }
 
     /**
