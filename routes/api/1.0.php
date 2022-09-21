@@ -143,4 +143,14 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Отправка в архив */
         Route::post('drop', [App\Http\Controllers\Tenants::class, "drop"]);
     });
+
+    /** Маршрутизация парковки */
+    Route::group(['prefix' => "parking"], function () {
+
+        /** Вывод данных для создания или редактирования машиноместа */
+        Route::post('get', [App\Http\Controllers\Incomes\Parking::class, "get"]);
+
+        /** Сохранение информации о машиноместе */
+        Route::put('save', [App\Http\Controllers\Incomes\Parking::class, "save"]);
+    });
 });

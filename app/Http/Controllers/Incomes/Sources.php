@@ -247,8 +247,10 @@ class Sources extends Controller
 
         Log::write($row, $request);
 
+        $row = $request->toParking ? (new Parking)->source($row) : $this->getIncomeSourceRow($row);
+
         return response()->json([
-            'row' => $this->getIncomeSourceRow($row),
+            'row' => $row,
         ]);
     }
 }

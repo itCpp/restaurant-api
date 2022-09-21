@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Incomes\Parking;
 use App\Http\Controllers\Incomes\Purposes;
 use App\Http\Controllers\Incomes\Sources;
 use App\Models\CashboxTransaction;
@@ -23,6 +24,9 @@ class Incomes extends Controller
      */
     public function index(Request $request)
     {
+        if ($request->id == "parking")
+            return (new Parking)->index($request);
+
         $rows = IncomePart::whereBuildingId($request->id)
             ->get()
             ->map(function ($row) {
@@ -30,29 +34,6 @@ class Incomes extends Controller
                 return $row;
             })
             ->toArray();
-
-        if ((int) $request->id == 3) {
-
-            $parking_sources = IncomeSource::select("part_id")
-                ->where('is_parking', true)
-                ->distinct()
-                ->get()
-                ->map(function ($row) {
-                    return $row->part_id;
-                })
-                ->toArray();
-
-            foreach ($parking_sources as $part_id) {
-
-                $part = IncomePart::find($part_id);
-
-                $rows[] = [
-                    'name' => $part->name ?? null,
-                    'comment' => $part->comment ?? null,
-                    'rows' => $this->getSourcesPart($part_id, true),
-                ];
-            }
-        }
 
         return response()->json([
             'rows' => $rows,

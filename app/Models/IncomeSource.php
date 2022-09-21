@@ -27,6 +27,7 @@ class IncomeSource extends Model
         'price',
         'date',
         'date_to',
+        'is_rent',
         'is_free',
         'is_parking',
         'is_internet',
@@ -41,6 +42,7 @@ class IncomeSource extends Model
      */
     protected $casts = [
         'date' => "date:Y-m-d",
+        'is_rent' => "boolean",
         'is_free' => "boolean",
         'is_parking' => "boolean",
         'is_internet' => "boolean",
