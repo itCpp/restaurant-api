@@ -97,6 +97,20 @@ class Sources extends Controller
             ? now()->addMonth()->setDay(20)->format("Y-m-d")
             : now()->setDay(20)->format("Y-m-d");
 
+        if (!$row->is_deposit ?? null) {
+            $row->is_deposit = (bool) CashboxTransaction::where([
+                ['income_source_id', $row->id],
+                ['purpose_pay', 3]
+            ])->count();
+        }
+
+        if (!$row->is_legal_address ?? null) {
+            $row->is_legal_address = (bool) CashboxTransaction::where([
+                ['income_source_id', $row->id],
+                ['purpose_pay', 4]
+            ])->count();
+        }
+
         foreach (Purposes::getEveryMonthId() as $value) {
 
             $last = CashboxTransaction::whereIncomeSourceId($row->id)

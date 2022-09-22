@@ -57,12 +57,12 @@ class Pays extends Controller
             ->when((bool) $source_id, function ($query) use ($source_id) {
                 $query->whereIncomeSourceId($source_id);
             })
-            ->when((bool) $source->date ?? null, function ($query) use ($source) {
-                $query->where('date', '>=', $source->date);
-            })
-            ->when((bool) $source->date_to ?? null, function ($query) use ($source) {
-                $query->where('date', '<=', $source->date_to);
-            })
+            // ->when((bool) $source->date ?? null, function ($query) use ($source) {
+            //     $query->where('date', '>=', $source->date);
+            // })
+            // ->when((bool) $source->date_to ?? null, function ($query) use ($source) {
+            //     $query->where('date', '<=', $source->date_to);
+            // })
             ->orderBy('id', 'DESC')
             ->get()
             ->map(function ($row) {
@@ -117,6 +117,8 @@ class Pays extends Controller
                 if ((int) now()->format("d") > $day_x)
                     $date_now = now()->setDay($day_x)->subMonth();
 
+                $date_now_x = now()->create($date_x)->subMonth();
+
                 /** Проверка существующих типов оплаты */
                 foreach ($rows as $row) {
 
@@ -135,13 +137,13 @@ class Pays extends Controller
                 }
 
                 /** Проверка необходимости оплаты аренды */
-                if ($this->source->is_rent and !$is_rent) {
-                    $pay_sum = (float) $this->source->space * (float) $this->source->price;
+                if ($this->source->is_rent and !$is_rent and $date_now_x > now()->create($this->source->date)) {
+                    $pay_sum = round((float) $this->source->space * (float) $this->source->price, 2);
                     $rows[] = $this->getEmptyPayRow($this->source->id, 1, $key, $day_x, $pay_sum);
                 }
 
                 /** Проверка оплаченных парковок */
-                if ($this->source->is_parking and $date_now > now()->create($date_x)->subMonth()) {
+                if ($this->source->is_parking and $date_now > $date_now_x) {
                     $this->appendNotPayParkingList($rows, $key, $day_x, $date_x, $parking_id);
                 }
 
