@@ -24,12 +24,16 @@ class Salaries extends Controller
 
         $row = (new Employees)->employee($row);
 
-        $salary = EmployeeSalary::create([
+        $salary = EmployeeSalary::firstOrNew([
             'employee_id' => $row->id,
-            'salary' => (float) $request->salary,
-            'salary_prev' => $row->salary ?? 0,
             'start_date' => $request->date,
         ]);
+
+        $salary->salary = (float) $request->salary;
+        $salary->is_one_day = (bool) $request->is_one_day;
+        $salary->salary_prev = $row->salary ?? 0;
+
+        $salary->save();
 
         Log::write($salary, $request);
 

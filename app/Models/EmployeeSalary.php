@@ -17,7 +17,17 @@ class EmployeeSalary extends Model
     protected $fillable = [
         'employee_id',
         'salary',
+        'is_one_day',
         'salary_prev',
         'start_date',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'is_one_day' => 'boolean',
     ];
 }

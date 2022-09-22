@@ -155,7 +155,7 @@ class Employees extends Controller
     {
         $max = (int) Employee::max('pin');
 
-        return $max > 100 ? $max : 100;
+        return ($max > 100 ? $max : 100) + 1;
     }
 
     /**
