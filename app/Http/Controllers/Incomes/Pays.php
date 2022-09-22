@@ -130,7 +130,7 @@ class Pays extends Controller
                 /** Проверка необходимости оплаты аренды */
                 if ($this->source->is_rent and !$is_rent) {
                     $pay_sum = (float) $this->source->space * (float) $this->source->price;
-                    $rows[] = $this->getEmptyRow($this->source->id, 1, $key, $day_x, $pay_sum);
+                    $rows[] = $this->getEmptyPayRow($this->source->id, 1, $key, $day_x, $pay_sum);
                 }
 
                 /** Проверка оплаченных парковок */
