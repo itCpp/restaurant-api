@@ -49,6 +49,7 @@ class Employees extends Controller
 
         $salary = EmployeeSalary::whereEmployeeId($row->id)->orderBy('start_date', "DESC")->first();
         $row->salary = $salary->salary ?? 0;
+        $row->salary_one_day = $salary->is_one_day ?? false;
         $row->salary_date = $salary ? now()->format("Y-m-d") : $row->date_work_start;
 
         if (is_array($row->personal_data)) {
