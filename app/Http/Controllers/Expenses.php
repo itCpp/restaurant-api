@@ -133,6 +133,7 @@ class Expenses extends Controller
         $row->name = $request->name;
         $row->sum = $sum;
         $row->is_expense = true;
+        $row->type_pay = $request->type_pay;
         $row->expense_type_id = $request->expense_type_id;
         $row->expense_subtype_id = $request->expense_subtype_id;
         $row->date = $request->date ?: now()->format("Y-m-d");
