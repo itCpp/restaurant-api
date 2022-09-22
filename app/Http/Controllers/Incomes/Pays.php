@@ -37,7 +37,7 @@ class Pays extends Controller
             $source = new IncomeSource;
 
         $this->source = $source;
-        $this->source->parking = (new Parking)->getParkingList($source->id);
+        $this->parking = (new Parking)->getParkingList($source->id);
         $this->incomes = new Incomes;
         $this->purposes = Purposes::collect();
 
@@ -134,8 +134,16 @@ class Pays extends Controller
                 }
 
                 /** Проверка оплаченных парковок */
-                if ($this->source->is_parking and !$is_parking) {
-                    $this->appendNotPayParkingList($rows, $key, $day_x);
+                if ($this->source->is_parking) {
+                    $this->appendNotPayParkingList($rows, $key, $day_x, $date_x, $parking_id);
+                }
+
+                foreach ($rows as &$row) {
+
+                    if ($row->income_source_parking_id ?? null)
+                        $row->hide_overdue = $this->hide_overdues[$key]['p'][$row->income_source_parking_id] ?? null;
+                    else
+                        $row->hide_overdue = $this->hide_overdues[$key][$row->purpose_id ?? null] ?? null;
                 }
 
                 return [
@@ -199,6 +207,9 @@ class Pays extends Controller
             ->get()
             ->each(function ($row) {
                 $this->hide_overdues[$row->month][$row->purpose_id] = true;
+
+                if ($row->parking_id)
+                    $this->hide_overdues[$row->month]["p"][$row->parking_id] = true;
             });
 
         if ((int) now()->format("d") < ($this->day_x ?? null)) {
@@ -240,10 +251,30 @@ class Pays extends Controller
      * @param  array $rows
      * @param  string|null $month
      * @param  string|null $day_x
+     * @param  string|null $date_x
+     * @param  array $ids
      * @return array
      */
-    public function appendNotPayParkingList(&$rows, $month, $day_x)
+    public function appendNotPayParkingList(&$rows, $month, $day_x, $date_x, $ids)
     {
+        $source_id = $this->source->id;
+
+        foreach ($this->parking as $parking) {
+
+            if (in_array($parking->id, $ids))
+                continue;
+
+            if (now()->create($date_x) > now()->create($parking->date_from)) {
+
+                $row = $this->getEmptyPayRow($source_id, 2, $month, $day_x, $parking->price);
+                $row->parking = $parking;
+                $row->income_source_parking_id = $parking->id;
+                $row->purpose_name .= " " . $parking->parking_place;
+
+                $rows[] = $row;
+            }
+        }
+
         return $rows;
     }
 }

@@ -17,6 +17,7 @@ class OverdueException extends Model
     protected $fillable = [
         'source_id',
         'purpose_id',
+        'parking_id',
         'month',
     ];
 }

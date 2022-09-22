@@ -10,6 +10,7 @@ use App\Models\CashboxTransaction;
 use App\Models\IncomePart;
 use App\Models\IncomeSource;
 use App\Models\IncomeSourceLog;
+use App\Models\IncomeSourceParking;
 use App\Models\Log;
 use App\Models\OverdueException;
 use Illuminate\Http\Request;
@@ -127,6 +128,7 @@ class Incomes extends Controller
         $row->is_income = true;
         $row->income_part_id = $request->income_part_id;
         $row->income_source_id = $source->id;
+        $row->income_source_parking_id = $request->parking_id;
         $row->date = $request->date ?: now()->format("Y-m-d");
         $row->month = now()->create($row->date)->format("Y-m");
         $row->user_id = $request->user()->id;
@@ -182,161 +184,6 @@ class Incomes extends Controller
     public function view(Request $request, $source = null)
     {
         return (new Pays)->index($request, $source);
-
-        $toArray = false;
-
-        if ($source instanceof IncomeSource) {
-            $toArray = true;
-        } else {
-            if (!$source = IncomeSource::find($request->source_id))
-                $source = new IncomeSource;
-        }
-
-        $source_id = $source->id ?? $request->source_id;
-
-        if ($source->is_parking ?? null)
-            $source->parking = (new Parking)->getParkingList($source_id);
-
-        $this->purposes = Purposes::collect();
-
-        $rows = CashboxTransaction::whereIsIncome(true)
-            ->when((bool) $source_id, function ($query) use ($source_id) {
-                $query->whereIncomeSourceId($source_id);
-            })
-            ->when((bool) $source->date ?? null, function ($query) use ($source) {
-                $query->where('date', '>=', $source->date);
-            })
-            ->when((bool) $source->date_to ?? null, function ($query) use ($source) {
-                $query->where('date', '<=', $source->date_to);
-            })
-            ->orderBy('id', 'DESC')
-            ->get()
-            ->map(function ($row) use (&$data) {
-
-                $row = $this->getRowCashboxTransaction($row);
-                $data[$row->month][] = $row;
-
-                return $row;
-            });
-
-        $date_check = now()->create($source->date ?? now());
-
-        $day_x = $source->settings['pay_day'] ?? 20;
-
-        $month_end = (int) now()->format("d") >= $day_x
-            ? now()->format("Y-m")
-            : now()->subMonth()->format("Y-m");
-
-        if ($request->toLastMonth)
-            $month_end = now()->format("Y-m");
-
-        $months = [];
-
-        while ($date_check->format("Y-m") <= $month_end) {
-
-            $month = $date_check->format("Y-m");
-
-            if (!isset($data[$month])) {
-                $data[$month] = [];
-            }
-
-            $months[] = $month;
-            $date_check->addMonth();
-        }
-
-        $hide_overdues = [];
-
-        OverdueException::where('source_id', $source_id)
-            ->whereIn('month', $months)
-            ->get()
-            ->each(function ($row) use (&$hide_overdues) {
-                $hide_overdues[$row->month][$row->purpose_id] = true;
-            });
-
-        if ((int) now()->format("d") < $day_x) {
-            $month = now()->format("Y-m");
-            foreach ($this->purposes as $p)
-                $hide_overdues[$month][$p['id']] = true;
-        }
-
-        $response_data = collect($data ?? [])->sortKeysDesc()
-            ->map(function ($row, $key) use ($source, $hide_overdues, $day_x) {
-
-                /** Смещение даты оплаты, если аренда началась позже */
-                if (now()->create($key)->setDay($day_x) < now()->create($source->date))
-                    $day_x = (int) now()->create($source->date)->format("d");
-
-                $date_x = now()->create($key)->setDay($day_x)->format("Y-m-d");
-
-                $is_arenda = false;
-                $is_parking = false;
-                $is_internet = false;
-
-                foreach ($row as $value) {
-
-                    if ($value->purpose_pay == 1)
-                        $is_arenda = true;
-
-                    if ($value->purpose_pay == 2)
-                        $is_parking = true;
-
-                    if ($value->purpose_pay == 5)
-                        $is_internet = true;
-                }
-
-                if (!$is_arenda and $source->is_rent) {
-                    $row[] = $this->getEmptyRow($source->id, 1, $key, $day_x);
-                }
-
-                if (!$is_parking) {
-
-                    if ($source->is_parking ?? null) {
-
-                        $new_row = $this->getEmptyRow($source->id, 2, $key, $day_x);
-
-                        foreach ($source->parking ?? [] as $parking) {
-
-                            $date_parking = now()->create($parking->date_from ?? $source->date)->format("Y-m-d");
-
-                            if ($date_parking < $date_x)
-                                $row[] = $new_row;
-                        }
-                    }
-                }
-
-                if (!$is_internet) {
-
-                    $new_row = $this->getEmptyRow($source->id, 5, $key, $day_x);
-
-                    if ($source->is_internet ?? null) {
-
-                        $internet_date = now()->create($source->settings['internet_date'] ?? $source->date)->format("Y-m-d");
-
-                        if ($internet_date < $date_x)
-                            $row[] = $new_row;
-                    }
-                }
-
-                foreach ($row as &$value) {
-                    $value->hide_overdue = $hide_overdues[$key][$value->purpose_id ?? null] ?? null;
-                }
-
-                return [
-                    'month' => $key,
-                    'rows' => $row,
-                ];
-            })
-            ->values()
-            ->all();
-
-        if ($toArray)
-            return $response_data;
-
-        return response()->json([
-            'row' => $source,
-            'rows' => $rows,
-            'data' => $response_data,
-        ]);
     }
 
     /**
@@ -363,7 +210,30 @@ class Incomes extends Controller
             }
         }
 
+        if ($row->parking = $this->getParkingInfo($row->income_source_parking_id))
+            $row->purpose_name .= " " . $row->parking->parking_place;
+
         return $row;
+    }
+
+    /**
+     * Дополняет информацию о парковке
+     * 
+     * @param  int|null $parking_id
+     * @return \App\Models\IncomeSourceParking|null
+     */
+    public function getParkingInfo($parking_id)
+    {
+        if (!$parking_id)
+            return null;
+
+        if (empty($this->get_parking_info))
+            $this->get_parking_info = [];
+
+        if (isset($this->get_parking_info[$parking_id]))
+            return $this->get_parking_info[$parking_id];
+
+        return $this->get_parking_info[$parking_id] = IncomeSourceParking::find($parking_id);
     }
 
     /**
@@ -447,19 +317,20 @@ class Incomes extends Controller
         $row = OverdueException::where([
             ['source_id', $request->source_id],
             ['purpose_id', $request->purpose],
+            ['parking_id', $request->parking_id],
             ['month', $request->month],
         ])->first();
 
         if ($row) {
 
             $row->delete();
-
             $hide_overdue = false;
         } else {
 
             $row = OverdueException::create([
                 'source_id' => $request->source_id,
                 'purpose_id' => $request->purpose,
+                'parking_id' => $request->parking_id,
                 'month' => $request->month,
             ]);
 
@@ -475,6 +346,7 @@ class Incomes extends Controller
             'row' => [
                 'purpose_id' => $request->purpose,
                 'hide_overdue' => $hide_overdue,
+                'income_source_parking_id' => $request->parking_id,
             ],
             'source' => (new Sources)->getIncomeSourceRow(
                 IncomeSource::firstOrNew(['id' => $request->source_id])
