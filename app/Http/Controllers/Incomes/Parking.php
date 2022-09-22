@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Incomes;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashboxTransaction;
 use App\Models\IncomeSource;
 use App\Models\IncomeSourceParking;
 use App\Models\Log;
@@ -70,7 +71,68 @@ class Parking extends Controller
      */
     public function parking(IncomeSourceParking $row)
     {
+        $row->is_overdue = $this->isOverdue($row);
+
         return $row;
+    }
+
+    /**
+     * Определение просроченного платежа парковки
+     * 
+     * @param  \App\Models\IncomeSourceParking $row
+     * @return boolean
+     */
+    public function isOverdue(IncomeSourceParking &$row)
+    {
+        $date_start = now()->create($row->date_from);
+        $date_end = now()->create($row->date_to ?? now());
+
+        $pays = [];
+
+        while ($date_start->copy()->format("Y-m") <= $date_end->copy()->format("Y-m")) {
+
+            $month = $date_start->copy()->format("Y-m");
+
+            $pays[$month] = [
+                'month' => $month,
+                'rows' => [],
+            ];
+
+            $date_start->addMonth();
+        }
+
+        CashboxTransaction::where('income_source_id', $row->source_id)
+            ->where('income_source_parking_id', $row->id)
+            ->orderBy('date', "DESC")
+            ->get()
+            ->each(function ($row) use (&$pays) {
+                $pays[$row->month]['rows'][] = $row;
+            });
+
+        $row->pays = collect($pays)->sortKeysDesc()
+            ->map(function ($row, $key) {
+                return [
+                    'month' => $key,
+                    'rows' => $row['rows'] ?? [],
+                ];
+            })
+            ->values()
+            ->all();
+
+        $overdue = false;
+        $now_month = now()->format("Y-m");
+
+        foreach ($row->pays as $pay) {
+
+            if ($pay['month'] === $now_month and !count($pay['rows']))
+                $overdue = true;
+            else if (!count($pay['rows']))
+                $overdue = true;
+        }
+
+        $row->last_pay = $row->pays[0]['rows'][0] ?? null;
+
+        return $overdue;
     }
 
     /**
