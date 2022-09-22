@@ -24,20 +24,32 @@ class Salaries extends Controller
 
         $row = (new Employees)->employee($row);
 
-        $salary = EmployeeSalary::firstOrNew([
-            'employee_id' => $row->id,
-            'start_date' => $request->date,
-        ]);
+        $find = false;
 
+        $salary = EmployeeSalary::where('employee_id', $row->id)
+            ->where('start_date', $request->date)
+            ->first();
+
+        if ($salary)
+            $find = true;
+
+        if (!$salary)
+            $salary = new EmployeeSalary;
+
+        $salary->employee_id = $row->id;
+        $salary->start_date = $request->date;
         $salary->salary = (float) $request->salary;
         $salary->is_one_day = (bool) $request->is_one_day;
-        $salary->salary_prev = $row->salary ?? 0;
+
+        if (!$find)
+            $salary->salary_prev = $row->salary ?? 0;
 
         $salary->save();
 
         Log::write($salary, $request);
 
         $row->salary = $salary->salary;
+        $row->salary_one_day = $salary->is_one_day;
         $row->salary_date = $salary->start_date;
 
         return response()->json([
