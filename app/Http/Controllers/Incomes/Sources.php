@@ -140,14 +140,8 @@ class Sources extends Controller
             ];
         }
 
-        if ($row->is_parking and !in_array($check_month, $last_months[2] ?? [])) {
-            $next_pays[] = [
-                'date' => $next_date,
-                'price' => $row->settings['parking_price'] ?? 0,
-                'type' => 2,
-                'icon' => "car",
-                'title' => "Аренда парковки",
-            ];
+        if ($row->is_parking) {
+            self::findNextPaysParking($row, $next_pays, $next_date);
         }
 
         if ($row->is_internet and !in_array($check_month, $last_months[5] ?? [])) {
@@ -171,6 +165,52 @@ class Sources extends Controller
         }
 
         return $overdue;
+    }
+
+    /**
+     * Добавляет данные по следующим платежам аренды парковок
+     * 
+     * @param  \App\Models\IncomeSource $row
+     * @param  array $data
+     * @param  string $date
+     * @return array
+     */
+    public static function findNextPaysParking(&$row, &$data, $date)
+    {
+        if (!($row->parking ?? null))
+            $row->parking = (new Parking)->getParkingList($row->id);
+
+        $parkings_id = collect($row->parking)->map(function ($row) {
+            return $row->id;
+        })->toArray();
+
+        $paid = CashboxTransaction::whereIn('income_source_parking_id', $parkings_id)
+            ->whereBetween('date', [
+                now()->create($date)->subMonth(),
+                now()->create($date),
+            ])
+            ->get()
+            ->map(function ($row) {
+                return $row->income_source_parking_id;
+            })
+            ->toArray();
+
+        foreach ($row->parking as $parking) {
+
+            if (in_array($parking->id, $paid))
+                continue;
+
+            $data[] = [
+                'date' => $date,
+                'price' => $parking->price,
+                'type' => 2,
+                'icon' => "car",
+                'title' => "Аренда парковки " . $parking->parking_place,
+                'income_source_parking_id' => $parking->id,
+            ];
+        }
+
+        return $data;
     }
 
     /**

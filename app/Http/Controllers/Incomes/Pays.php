@@ -112,6 +112,11 @@ class Pays extends Controller
                 $parking_id = []; # Идентификаторы оплаченных парковок
                 $is_internet = false; # Оплата интернета
 
+                $date_now = now()->setDay($day_x);
+
+                if ((int) now()->format("d") > $day_x)
+                    $date_now = now()->setDay($day_x)->subMonth();
+
                 /** Проверка существующих типов оплаты */
                 foreach ($rows as $row) {
 
@@ -120,7 +125,9 @@ class Pays extends Controller
 
                     if ($row->purpose_pay == 2) {
                         $is_parking = true;
-                        $parking_id[] = $row->income_source_parking_id;
+
+                        if ($date_now > now()->create($row->date)->subMonth())
+                            $parking_id[] = $row->income_source_parking_id;
                     }
 
                     if ($row->purpose_pay == 5)
@@ -134,7 +141,7 @@ class Pays extends Controller
                 }
 
                 /** Проверка оплаченных парковок */
-                if ($this->source->is_parking) {
+                if ($this->source->is_parking and $date_now > now()->create($date_x)->subMonth()) {
                     $this->appendNotPayParkingList($rows, $key, $day_x, $date_x, $parking_id);
                 }
 
