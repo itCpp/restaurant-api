@@ -88,6 +88,7 @@ class Parking extends Controller
         $date_end = now()->create($row->date_to ?? now());
 
         $pays = [];
+        $all_months = [];
 
         while ($date_start->copy()->format("Y-m") <= $date_end->copy()->format("Y-m")) {
 
@@ -98,6 +99,8 @@ class Parking extends Controller
                 'rows' => [],
             ];
 
+            $all_months[] = $month;
+
             $date_start->addMonth();
         }
 
@@ -105,9 +108,14 @@ class Parking extends Controller
             ->where('income_source_parking_id', $row->id)
             ->orderBy('date', "DESC")
             ->get()
-            ->each(function ($row) use (&$pays) {
+            ->each(function ($row) use (&$pays, &$all_months) {
+                $all_months[] = $row->month;
                 $pays[$row->month]['rows'][] = $row;
             });
+
+        $this->all_months = array_values(array_unique($all_months));
+
+        $row->next_pay = $this->getNextPay($row);
 
         $row->pays = collect($pays)->sortKeysDesc()
             ->map(function ($row, $key) {
@@ -133,6 +141,49 @@ class Parking extends Controller
         $row->last_pay = $row->pays[0]['rows'][0] ?? null;
 
         return $overdue;
+    }
+
+    /**
+     * Определяет следующий платеж
+     * 
+     * @param  \App\Models\IncomeSourceParking $row
+     * @return \App\Models\CashboxTransaction
+     */
+    public function getNextPay($row)
+    {
+        $day = (int) now()->format("d");
+        $next_month = now()->addMonth()->format("Y-m");
+        $now_month = now()->format("Y-m");
+
+        if ($day > 20 and !in_array($now_month, $this->all_months))
+            return $this->getNextPayModel($row, day_x: false);
+
+        if ($day > 20 and !in_array($next_month, $this->all_months))
+            return $this->getNextPayModel($row, 1);
+
+        return $this->getNextPayModel($row);
+    }
+
+    /**
+     * Формирует объект модели следующего платежа
+     * 
+     * @param  \App\Models\IncomeSourceParking $row
+     * @param  int $add_month
+     * @param  boolean $day_x
+     * @return \App\Models\CashboxTransaction
+     */
+    public function getNextPayModel($row, $add_month = 0, $day_x = true)
+    {
+        $d = $day_x ? "20" : "d";
+
+        $next = new CashboxTransaction;
+        $next->month = now()->addMonths($add_month)->format("Y-m");
+        $next->date = now()->addMonths($add_month)->format("Y-m-$d");
+        $next->income_source_id = $row->source_id;
+        $next->income_source_parking_id = $row->id;
+        $next->sum = 0;
+
+        return $next;
     }
 
     /**
