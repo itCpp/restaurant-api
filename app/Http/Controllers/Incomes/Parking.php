@@ -8,6 +8,7 @@ use App\Models\IncomeSource;
 use App\Models\IncomeSourceParking;
 use App\Models\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 
 class Parking extends Controller
 {
@@ -161,6 +162,12 @@ class Parking extends Controller
         if ($day > 20 and !in_array($next_month, $this->all_months))
             return $this->getNextPayModel($row, 1);
 
+        if ($day > 20 and in_array($next_month, $this->all_months))
+            return $this->getNextPayModel($row, 2);
+
+        if ($day <= 20 and in_array($now_month, $this->all_months))
+            return $this->getNextPayModel($row, 1);
+
         return $this->getNextPayModel($row);
     }
 
@@ -181,7 +188,7 @@ class Parking extends Controller
         $next->date = now()->addMonths($add_month)->format("Y-m-$d");
         $next->income_source_id = $row->source_id;
         $next->income_source_parking_id = $row->id;
-        $next->sum = 0;
+        $next->pay_sum = $row->price;
 
         return $next;
     }
@@ -257,6 +264,41 @@ class Parking extends Controller
 
         return response()->json([
             'source_id' => $request->source_id,
+            'row' => $this->parking($row),
+        ]);
+    }
+
+    /**
+     * Сохранение платежа парковки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function pay(Request $request)
+    {
+        if (!$row = IncomeSourceParking::find($request->parking_id))
+            return response()->json(['message' => "Информация о парковке не найдена"], 400);
+
+        $source = IncomeSource::find($row->source_id);
+
+        $pay = new CashboxTransaction;
+        $pay->sum = $request->sum;
+        $pay->purpose_pay = 2;
+        $pay->is_income = true;
+        $pay->income_part_id = $source->part_id ?? null;
+        $pay->income_source_id = $row->source_id;
+        $pay->income_source_parking_id = $row->id;
+        $pay->income_source_parking_id = $row->id;
+        $pay->date = $request->date;
+        $pay->month = now()->create($request->date)->format("Y-m");
+        $pay->user_id = $request->user()->id;
+
+        $pay->save();
+
+        Log::write($pay, $request);
+        Artisan::call("pays:overdue {$row->source_id}");
+
+        return response()->json([
             'row' => $this->parking($row),
         ]);
     }

@@ -111,6 +111,9 @@ Route::middleware('auth:sanctum')->group(function () {
             /** Создание раздела */
             Route::post('save', [App\Http\Controllers\Incomes\Parts::class, "save"]);
         });
+
+        /** Сохранение платежа парковки */
+        Route::put('parking/save', [App\Http\Controllers\Incomes\Parking::class, "pay"]);
     });
 
     /** Сотрудники */
