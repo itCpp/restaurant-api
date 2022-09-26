@@ -146,6 +146,13 @@ class Parking extends Controller
             $overdue = false;
         }
 
+        /** Проверка просрочки до окончания аренды */
+        if ($row->date_to and $row->next_pay) {
+
+            if (now()->create($row->date_to) < now()->create($row->next_pay->date))
+                $row->next_pay = null;
+        }
+
         return $overdue;
     }
 
