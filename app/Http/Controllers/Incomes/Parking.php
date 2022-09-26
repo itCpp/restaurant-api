@@ -144,7 +144,6 @@ class Parking extends Controller
         }
 
         $this->all_months = array_values(array_unique($all_months));
-        $row->__all = $this->all_months;
 
         $row->last_pay = $last_pay;
         $row->next_pay = $this->getNextPay($row);

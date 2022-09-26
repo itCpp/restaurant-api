@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Expenses\Types;
 use App\Models\CashboxTransaction;
+use App\Models\Employee;
 use App\Models\ExpenseSubtype;
 use App\Models\ExpenseType;
 use App\Models\Log;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class Expenses extends Controller
@@ -62,7 +64,7 @@ class Expenses extends Controller
         $row->sum = abs($row->sum);
 
         $row->type = $this->getExpenseTypeName($row->expense_type_id);
-        $row->name_type = $this->getExpenseSubTypeName($row->expense_subtype_id);
+        $row->name_type = $this->getExpenseSubTypeName($row->expense_subtype_id, $row->expense_type_id);
 
         return $to_array ? $row->toArray() : $row;
     }
@@ -155,28 +157,44 @@ class Expenses extends Controller
      * @param  int|null $id
      * @return string|null
      */
-    public function getExpenseTypeName($id)
+    public function
+    getExpenseTypeName($id)
     {
         $id = (int) $id;
 
         if (isset($this->expense_types[$id]))
             return $this->expense_types[$id];
 
-        return $this->expense_types[$id] = ExpenseType::find($id)->name ?? null;
+        $this->expense_types_object[$id] = ExpenseType::find($id);
+
+        return $this->expense_types[$id] = $this->expense_types_object[$id]->name ?? null;
     }
 
     /**
      * Выводит фиксированное наименоватие расхода
      * 
      * @param  int|null $id
+     * @param  int|null $type_id
      * @return string|null
      */
-    public function getExpenseSubTypeName($id)
+    public function getExpenseSubTypeName($id, $type_id)
     {
         $id = (int) $id;
 
         if (isset($this->expense_subtypes[$id]))
             return $this->expense_subtypes[$id];
+
+        $type_subtype = ($this->expense_types_object[$type_id]->type_subtypes ?? null);
+
+        if ($type_subtype == "users") {
+
+            $row = Employee::find($id);
+            $name = ((string) ($row->surname ?? null)) . " ";
+            $name .= ((string) ($row->name ?? null)) . " ";
+            $name .= (string) ($row->middle_name ?? null);
+
+            return $this->expense_subtypes[$id] = trim($name);
+        }
 
         return $this->expense_subtypes[$id] = ExpenseSubtype::find($id)->name ?? null;
     }
