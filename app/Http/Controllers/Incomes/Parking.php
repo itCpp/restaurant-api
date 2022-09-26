@@ -170,17 +170,17 @@ class Parking extends Controller
      * @param  \App\Models\IncomeSourceParking $row
      * @return \App\Models\CashboxTransaction
      */
-    public function getNextPay($row)
+    public function getNextPay(&$row)
     {
         $day = (int) now()->format("d");
-        $next_month = now()->addMonth()->format("Y-m");
+        $next_month = now()->create($row->last_pay->date ?? now())->addMonth()->format("Y-m");
         $now_month = now()->format("Y-m");
 
         if ($day > 20 and !in_array($now_month, $this->all_months))
             return $this->getNextPayModel($row, day_x: false);
 
         if ($day > 20 and !in_array($next_month, $this->all_months))
-            return $this->getNextPayModel($row, 1);
+            return $this->getNextPayModel($row, now()->diffInMonths(now()->create($next_month)) + 1);
 
         if ($day > 20 and in_array($next_month, $this->all_months))
             return $this->getNextPayModel($row, 2);
