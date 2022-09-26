@@ -141,6 +141,11 @@ class Parking extends Controller
 
         $row->last_pay = $row->pays[0]['rows'][0] ?? null;
 
+        if (!(int) $row->sum) {
+            $row->next_pay = null;
+            $overdue = false;
+        }
+
         return $overdue;
     }
 
