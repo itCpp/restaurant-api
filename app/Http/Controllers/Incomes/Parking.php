@@ -86,7 +86,7 @@ class Parking extends Controller
     public function isOverdue(IncomeSourceParking &$row)
     {
         $date_start = now()->create($row->date_from);
-        $date_end = now()->create($row->date_to ?? now());
+        $date_end = now();
 
         $pays = [];
         $all_months = [];
@@ -109,14 +109,9 @@ class Parking extends Controller
             ->where('income_source_parking_id', $row->id)
             ->orderBy('date', "DESC")
             ->get()
-            ->each(function ($row) use (&$pays, &$all_months) {
-                $all_months[] = $row->month;
+            ->each(function ($row) use (&$pays) {
                 $pays[$row->month]['rows'][] = $row;
             });
-
-        $this->all_months = array_values(array_unique($all_months));
-
-        $row->next_pay = $this->getNextPay($row);
 
         $row->pays = collect($pays)->sortKeysDesc()
             ->map(function ($row, $key) {
@@ -130,16 +125,29 @@ class Parking extends Controller
 
         $overdue = false;
         $now_month = now()->format("Y-m");
+        $last_pay = null;
 
         foreach ($row->pays as $pay) {
+
+            if (count($pay['rows']))
+                $all_months[] = $pay['month'];
 
             if ($pay['month'] === $now_month and !count($pay['rows']))
                 $overdue = true;
             else if (!count($pay['rows']))
                 $overdue = true;
+
+            if ((bool) $last_pay)
+                continue;
+
+            $last_pay = $pay['rows'][0] ?? null;
         }
 
-        $row->last_pay = $row->pays[0]['rows'][0] ?? null;
+        $this->all_months = array_values(array_unique($all_months));
+        $row->__all = $this->all_months;
+
+        $row->last_pay = $last_pay;
+        $row->next_pay = $this->getNextPay($row);
 
         if (!(int) $row->price) {
             $row->next_pay = null;
