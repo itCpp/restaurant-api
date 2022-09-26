@@ -180,23 +180,24 @@ class Expenses extends Controller
     public function getExpenseSubTypeName($id, $type_id)
     {
         $id = (int) $id;
+        $type_id = (int) $type_id;
 
-        if (isset($this->expense_subtypes[$id]))
-            return $this->expense_subtypes[$id];
+        if (isset($this->expense_subtypes[$type_id][$id]))
+            return $this->expense_subtypes[$type_id][$id];
 
-        $type_subtype = ($this->expense_types_object[$type_id]->type_subtypes ?? null);
+        $type_subtypes = ($this->expense_types_object[$type_id]->type_subtypes ?? null);
 
-        if ($type_subtype == "users") {
+        if ($type_subtypes == "users") {
 
             $row = Employee::find($id);
             $name = ((string) ($row->surname ?? null)) . " ";
             $name .= ((string) ($row->name ?? null)) . " ";
             $name .= (string) ($row->middle_name ?? null);
 
-            return $this->expense_subtypes[$id] = trim($name);
+            return $this->expense_subtypes[$type_id][$id] = trim($name);
         }
 
-        return $this->expense_subtypes[$id] = ExpenseSubtype::find($id)->name ?? null;
+        return $this->expense_subtypes[$type_id][$id] = ExpenseSubtype::find($id)->name ?? null;
     }
 
     /**
