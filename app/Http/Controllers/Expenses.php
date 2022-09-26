@@ -40,7 +40,7 @@ class Expenses extends Controller
     public function index(Request $request)
     {
         $paginate = CashboxTransaction::whereIsExpense(true)
-            ->orderBy('id', 'DESC')
+            ->orderBy('date', 'DESC')
             ->paginate(60);
 
         $rows = $paginate->map(function ($row) {
