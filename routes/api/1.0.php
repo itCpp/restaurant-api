@@ -157,4 +157,11 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Сохранение информации о машиноместе */
         Route::put('save', [App\Http\Controllers\Incomes\Parking::class, "save"]);
     });
+
+    /** Маршрутизация кассы */
+    Route::group(['prefix' => "cashbox"], function () {
+
+        /** Вывод данных из кассы */
+        Route::post('/', [App\Http\Controllers\Cashbox::class, "index"]);
+    });
 });
