@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Incomes\Purposes;
 use App\Models\CashboxTransaction;
+use App\Models\Employee;
+use App\Models\ExpenseSubtype;
+use App\Models\ExpenseType;
 use App\Models\IncomeSource;
 use App\Models\IncomeSourceParking;
 use Illuminate\Http\Request;
@@ -79,13 +82,26 @@ class Cashbox extends Controller
      */
     public function expenseRow(CashboxTransaction $row)
     {
+        $row->expense_type = $this->getExpenseType($row->expense_type_id);
+
+        $row->expense_subtype = $this->getExpenseSubType(
+            $row->expense_type_id,
+            $row->expense_subtype_id,
+            $row->expense_type->type_subtypes ?? null
+        );
+
+        if ($row->expense_subtype->name ?? null) {
+            $row->comment = $row->name;
+            $row->name = $row->expense_subtype->name;
+        }
+
         return $row;
     }
 
     /**
      * Поиск источников дохода
      * 
-     * @param  int $id
+     * @param  null|int $id
      * @return \App\Models\IncomeSource|null
      */
     public function getSource($id)
@@ -100,9 +116,9 @@ class Cashbox extends Controller
     }
 
     /**
-     * Поиск источников дохода
+     * Поиск данных парковочных мест
      * 
-     * @param  int $id
+     * @param  null|int $id
      * @return \App\Models\IncomeSourceParking|null
      */
     public function getParking($id)
@@ -117,5 +133,66 @@ class Cashbox extends Controller
             return $this->get_parking[$id];
 
         return $this->get_parking[$id] = IncomeSourceParking::find($id);
+    }
+
+    /**
+     * Поиск раздела типов расхода
+     * 
+     * @param  null|int $id
+     * @return \App\Models\ExpenseType|null
+     */
+    public function getExpenseType($id)
+    {
+        if (!$id)
+            return null;
+
+        if (empty($this->get_expense_type))
+            $this->get_expense_type = [];
+
+        if (isset($this->get_expense_type[$id]))
+            return $this->get_expense_type[$id];
+
+        return $this->get_expense_type[$id] = ExpenseType::find($id);
+    }
+
+    /**
+     * Поиск подразделов типов 
+     * 
+     * @param  null|int $type_id
+     * @param  null|int $sub_type_id
+     * @param  null|string $type_subtypes
+     * @return \App\Models\ExpenseSubtype|null
+     */
+    public function getExpenseSubType($type_id, $sub_type_id, $type_subtypes)
+    {
+        if (!$type_id)
+            return null;
+
+        if (empty($this->get_expense_sub_type))
+            $this->get_expense_sub_type = [];
+
+        if (isset($this->get_expense_sub_type[$type_id][$sub_type_id]))
+            return $this->get_expense_sub_type[$type_id][$sub_type_id];
+
+        if ($type_subtypes == "users") {
+
+            if (!$user = Employee::find($sub_type_id))
+                return $this->get_expense_sub_type[$type_id][$sub_type_id] = null;
+
+            $name = ((string) $user->surname) . " ";
+            $name .= ((string) $user->name) . " ";
+            $name .= (string) $user->middle_name;
+
+            $row = new ExpenseSubtype;
+            $row->id = $sub_type_id;
+            $row->expense_type_id = $type_id;
+            $row->name = trim($name);
+            $row->created_at = $user->created_at;
+            $row->updated_at = $user->updated_at;
+
+            return $this->get_expense_sub_type[$type_id][$sub_type_id] = $row;
+        }
+
+        return $this->get_expense_sub_type[$type_id][$sub_type_id] = ExpenseSubtype::find($sub_type_id);
     }
 }
