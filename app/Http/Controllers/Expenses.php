@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Expenses\SearchQuery;
 use App\Http\Controllers\Expenses\Types;
 use App\Models\CashboxTransaction;
 use App\Models\Employee;
@@ -9,11 +10,12 @@ use App\Models\ExpenseSubtype;
 use App\Models\ExpenseType;
 use App\Models\File;
 use App\Models\Log;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class Expenses extends Controller
 {
+    use SearchQuery;
+
     /**
      * Список типов расхода
      * 
@@ -40,11 +42,15 @@ class Expenses extends Controller
      */
     public function index(Request $request)
     {
-        $paginate = CashboxTransaction::whereIsExpense(true)
-            ->orderBy('date', 'DESC')
+        $data = CashboxTransaction::whereIsExpense(true);
+
+        if ((bool) $request->search)
+            $data = $this->setSearchQuery($data, $request->search);
+
+        $data = $data->orderBy('date', 'DESC')
             ->paginate(40);
 
-        $rows = $paginate->map(function ($row) {
+        $rows = $data->map(function ($row) {
             return $this->getRowData($row, true);
         });
 

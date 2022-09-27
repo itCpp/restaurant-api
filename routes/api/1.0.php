@@ -60,6 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('drop', [App\Http\Controllers\Expenses::class, "drop"]);
 
         /** Вывод фиксированных пунктов наименования */
+        Route::get('types', [App\Http\Controllers\Expenses\Types::class, "getTypesList"]);
         Route::post('types', [App\Http\Controllers\Expenses\Types::class, "getSubTypesList"]);
 
         /** Список файлов по расходу */

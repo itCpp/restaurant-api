@@ -12,6 +12,24 @@ use Illuminate\Http\Request;
 class Types extends Controller
 {
     /**
+     * Выводит список типов расходных платежей
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getTypesList(Request $request)
+    {
+        return response()->json(
+            ExpenseType::lazy()->map(function ($row) {
+                return [
+                    'value' => $row->id,
+                    'text' => $row->name,
+                ];
+            })
+        );
+    }
+
+    /**
      * Выводит список фиксированых наименований для типа расхода
      * 
      * @param  \Illuminate\Http\Request $request
