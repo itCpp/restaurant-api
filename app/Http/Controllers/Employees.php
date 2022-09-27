@@ -169,7 +169,7 @@ class Employees extends Controller
      */
     public static function findNewPin()
     {
-        $max = (int) Employee::max('pin');
+        $max = (int) Employee::withTrashed()->max('pin');
 
         return ($max > 100 ? $max : 100) + 1;
     }
