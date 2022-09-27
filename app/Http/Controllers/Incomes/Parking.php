@@ -302,6 +302,7 @@ class Parking extends Controller
 
         $pay = new CashboxTransaction;
         $pay->sum = $request->sum;
+        $pay->type_pay = $request->type_pay;
         $pay->purpose_pay = 2;
         $pay->is_income = true;
         $pay->income_part_id = $source->part_id ?? null;
