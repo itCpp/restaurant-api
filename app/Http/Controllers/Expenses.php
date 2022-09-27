@@ -7,6 +7,7 @@ use App\Models\CashboxTransaction;
 use App\Models\Employee;
 use App\Models\ExpenseSubtype;
 use App\Models\ExpenseType;
+use App\Models\File;
 use App\Models\Log;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -41,7 +42,7 @@ class Expenses extends Controller
     {
         $paginate = CashboxTransaction::whereIsExpense(true)
             ->orderBy('date', 'DESC')
-            ->paginate(60);
+            ->paginate(40);
 
         $rows = $paginate->map(function ($row) {
             return $this->getRowData($row, true);
@@ -65,6 +66,7 @@ class Expenses extends Controller
 
         $row->type = $this->getExpenseTypeName($row->expense_type_id);
         $row->name_type = $this->getExpenseSubTypeName($row->expense_subtype_id, $row->expense_type_id);
+        $row->files = File::where('cashbox_id', $row->id)->count();
 
         return $to_array ? $row->toArray() : $row;
     }
@@ -157,8 +159,7 @@ class Expenses extends Controller
      * @param  int|null $id
      * @return string|null
      */
-    public function
-    getExpenseTypeName($id)
+    public function getExpenseTypeName($id)
     {
         $id = (int) $id;
 

@@ -44,8 +44,8 @@ class Employees extends Controller
         $row->work_shedule_time = $row->work_shedule_time;
 
         $work_dates = EmployeeWorkDate::whereEmployeeId($row->id)->orderBy('id', "DESC")->first();
-        $row->date_work_start = $work_dates->work_start;
-        $row->date_work_stop = $work_dates->work_stop;
+        $row->date_work_start = $work_dates->work_start ?? null;
+        $row->date_work_stop = $work_dates->work_stop ?? null;
 
         $salary = EmployeeSalary::whereEmployeeId($row->id)->orderBy('start_date', "DESC")->first();
         $row->salary = $salary->salary ?? 0;
@@ -77,9 +77,24 @@ class Employees extends Controller
             'phone' => "required",
         ]);
 
+        $row = $this->createEmployeeRow($request);
+
+        return response()->json(
+            $this->employee($row)
+        );
+    }
+
+    /**
+     * Создание строки сотрудника
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \App\Models\Employee
+     */
+    public static function createEmployeeRow(Request $request)
+    {
         $row = new Employee;
 
-        $row->pin = $this->findNewPin();
+        $row->pin = self::findNewPin();
         $row->employee_otdel_id = $request->employee_otdel_id;
         $row->surname = $request->surname;
         $row->name = $request->name;
@@ -99,9 +114,7 @@ class Employees extends Controller
             'work_start' => now(),
         ]);
 
-        return response()->json(
-            $this->employee($row)
-        );
+        return $row;
     }
 
     /**
@@ -154,7 +167,7 @@ class Employees extends Controller
      * 
      * @return int
      */
-    public function findNewPin()
+    public static function findNewPin()
     {
         $max = (int) Employee::max('pin');
 

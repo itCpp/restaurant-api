@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Expenses;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Employees;
 use App\Models\Employee;
 use App\Models\ExpenseSubtype;
 use App\Models\ExpenseType;
@@ -95,12 +96,13 @@ class Types extends Controller
         $name = trim(preg_replace('/\s/', ' ', $name));
         $name = explode(" ", $name);
 
-        $row = new Employee;
-        $row->surname = $name[0] ?? null;
-        $row->name = $name[1] ?? null;
-        $row->middle_name = $name[2] ?? null;
+        request()->merge([
+            'surname' => $name[0] ?? null,
+            'name' => $name[1] ?? null,
+            'middle_name' => $name[2] ?? null,
+        ]);
 
-        $row->save();
+        $row = Employees::createEmployeeRow(request());
 
         return $row->id;
     }
