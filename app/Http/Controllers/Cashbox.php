@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Cashbox\Statistics;
 use App\Http\Controllers\Incomes\Purposes;
 use App\Models\CashboxTransaction;
 use App\Models\Employee;
@@ -13,6 +14,8 @@ use Illuminate\Http\Request;
 
 class Cashbox extends Controller
 {
+    use Statistics;
+
     /**
      * Вывод данных на главной странице
      * 
@@ -21,19 +24,27 @@ class Cashbox extends Controller
      */
     public function index(Request $request)
     {
-        $data = CashboxTransaction::orderBy('id', "DESC")
-            ->orderBy('date', "DESC")
+        $data = CashboxTransaction::orderBy('date', "DESC")
+            ->orderBy('id', "DESC")
             ->paginate(40);
 
-        $rows = $data->map(function ($row) {
+        $dates = [];
+
+        $rows = $data->map(function ($row) use (&$dates) {
+
+            $dates[] = $row->date;
+
             return $this->row($row);
         });
+
+        $statistics = $this->getStatistics($dates);
 
         return response()->json([
             'rows' => $rows ?? [],
             'page' => $data->currentPage(),
             'pages' => $data->lastPage(),
             'end' => $data->currentPage() == $data->lastPage(),
+            'statistics' => $statistics,
         ]);
     }
 
