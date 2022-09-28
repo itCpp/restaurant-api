@@ -163,5 +163,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Вывод данных из кассы */
         Route::post('/', [App\Http\Controllers\Cashbox::class, "index"]);
+
+        /** Строчка */
+        Route::post('get', [App\Http\Controllers\Cashbox::class, "get"]);
     });
 });

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Cashbox\Statistics;
+use App\Http\Controllers\Expenses\Types;
 use App\Http\Controllers\Incomes\Purposes;
 use App\Models\CashboxTransaction;
 use App\Models\Employee;
@@ -217,5 +218,42 @@ class Cashbox extends Controller
         }
 
         return $this->get_expense_sub_type[$type_id][$sub_type_id] = ExpenseSubtype::find($sub_type_id);
+    }
+
+    /**
+     * Вывод строки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function get(Request $request)
+    {
+        if (!$row = CashboxTransaction::find($request->id))
+            return response()->json(['message' => "Информация не найдена"], 400);
+
+        $response['row'] = $row;
+
+        $expense_types = ExpenseType::lazy();
+        $expense_subtypes = [];
+
+        if ($row->expense_type_id) {
+
+            $expense_type = $expense_types->where('id', $row->expense_type_id)->values()->all()[0] ?? null;
+
+            if (!$expense_type)
+                $expense_type = ExpenseType::find($row->expense_type_id);
+
+            if ($expense_type) {
+                $expense_subtypes = (new Types)->getSubTypesList(new Request(['id' => $row->expense_type_id]))->getData();
+            }
+        }
+
+        return response()->json([
+            'row' => $row,
+            'expense_types' => $expense_types->map(function ($row) {
+                return ['text' => $row->name, 'value' => $row->id];
+            }),
+            'expense_subtypes' => $expense_subtypes,
+        ]);
     }
 }
