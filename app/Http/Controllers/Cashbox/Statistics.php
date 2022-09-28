@@ -39,6 +39,8 @@ trait Statistics
                         $stat['incomingCard'] += $row->sum;
                     } elseif (!$row->type_pay or $row->type_pay == 1) {
                         $stat['incomingCash'] += $row->sum;
+                    } elseif ($row->type_pay == 3) {
+                        $stat['incomingCheckingAccount'] += $row->sum;
                     }
                 } elseif (!$row->is_income) {
 
@@ -48,6 +50,8 @@ trait Statistics
                         $stat['expenseCard'] += $row->sum;
                     } elseif (!$row->type_pay or $row->type_pay == 1) {
                         $stat['expenseCash'] += $row->sum;
+                    } elseif ($row->type_pay == 3) {
+                        $stat['expenseCheckingAccount'] += $row->sum;
                     }
                 }
             });
@@ -71,6 +75,8 @@ trait Statistics
             'expenseCash' => 0,
             'incomingCard' => 0,
             'expenseCard' => 0,
+            'incomingCheckingAccount' => 0,
+            'expenseCheckingAccount' => 0,
         ];
     }
 }
