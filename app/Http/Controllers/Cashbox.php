@@ -21,8 +21,9 @@ class Cashbox extends Controller
      */
     public function index(Request $request)
     {
-        $data = CashboxTransaction::orderBy('date', "DESC")
-            ->paginate(50);
+        $data = CashboxTransaction::orderBy('id', "DESC")
+            ->orderBy('date', "DESC")
+            ->paginate(40);
 
         $rows = $data->map(function ($row) {
             return $this->row($row);
@@ -30,6 +31,9 @@ class Cashbox extends Controller
 
         return response()->json([
             'rows' => $rows ?? [],
+            'page' => $data->currentPage(),
+            'pages' => $data->lastPage(),
+            'end' => $data->currentPage() == $data->lastPage(),
         ]);
     }
 
@@ -93,6 +97,14 @@ class Cashbox extends Controller
         if ($row->expense_subtype->name ?? null) {
             $row->comment = $row->name;
             $row->name = $row->expense_subtype->name;
+        }
+
+        if ($row->expense_type) {
+            $row->purpose = [
+                'name' => $row->expense_type->name,
+                'color' => "orange",
+                'icon' => $row->expense_type->icon ?? null,
+            ];
         }
 
         return $row;
