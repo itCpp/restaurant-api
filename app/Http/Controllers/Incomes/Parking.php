@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Incomes;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashboxTransaction;
+use App\Models\IncomesFile;
 use App\Models\IncomeSource;
 use App\Models\IncomeSourceParking;
 use App\Models\Log;
@@ -42,6 +43,8 @@ class Parking extends Controller
     public function source(IncomeSource $row)
     {
         $row->parking = $this->getParkingList($row->id);
+
+        $row->files = IncomesFile::where('income_id', $row->id)->count();
 
         return $row;
     }
