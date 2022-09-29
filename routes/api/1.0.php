@@ -156,6 +156,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Сохранение информации о машиноместе */
         Route::put('save', [App\Http\Controllers\Incomes\Parking::class, "save"]);
+
+        /** Список парковочных мест источника */
+        Route::post('list', [App\Http\Controllers\Incomes\Parking::class, "list"]);
     });
 
     /** Маршрутизация кассы */
@@ -166,5 +169,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Строчка */
         Route::post('get', [App\Http\Controllers\Cashbox::class, "get"]);
+
+        /** Сохранение или создание */
+        Route::post('save', [App\Http\Controllers\Cashbox\Save::class, "save"]);
     });
 });

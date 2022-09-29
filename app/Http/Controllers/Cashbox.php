@@ -248,12 +248,45 @@ class Cashbox extends Controller
             }
         }
 
+        $income_sources = IncomeSource::withTrashed()
+            ->where([
+                ['is_free', false],
+                ['deleted_at', null]
+            ])
+            ->when((bool) $row->income_source_id, function ($query) use ($row) {
+                $query->orWhere('id', $row->income_source_id);
+            })
+            ->orderBy('name')
+            ->lazy();
+
+        if ($row->income_source_id) {
+
+            $income_source = $income_sources->where('id', $row->income_source_id)->values()->all()[0] ?? null;
+
+            if (!$income_source)
+                $income_source = ExpenseType::find($row->income_source_id);
+
+            if ($income_source->is_parking) {
+                $income_source_parkings = IncomeSourceParking::where('source_id', $income_source->id)
+                    ->get()
+                    ->map(function ($row) {
+                        return [
+                            'text' => "Парковка №{$row->parking_place} ($row->car)",
+                            'value' => $row->id,
+                        ];
+                    });
+            }
+        }
+
         return response()->json([
             'row' => $row,
             'expense_types' => $expense_types->map(function ($row) {
                 return ['text' => $row->name, 'value' => $row->id];
             }),
             'expense_subtypes' => $expense_subtypes,
+            'income_sources' => $income_sources,
+            'income_source_parkings' => $income_source_parkings ?? [],
+            'purpose' => Purposes::getAll(),
         ]);
     }
 }

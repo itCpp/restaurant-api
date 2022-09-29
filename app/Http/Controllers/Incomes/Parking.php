@@ -325,4 +325,24 @@ class Parking extends Controller
             'row' => $this->parking($row),
         ]);
     }
+
+    /**
+     * Список парковочных мест
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function list(Request $request)
+    {
+        return response()->json(
+            IncomeSourceParking::where('source_id', $request->id)
+                ->get()
+                ->map(function ($row) {
+                    return [
+                        'text' => "Парковка №{$row->parking_place} ($row->car)",
+                        'value' => $row->id,
+                    ];
+                }),
+        );
+    }
 }
