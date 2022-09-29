@@ -6,7 +6,6 @@ use App\Http\Controllers\Cashbox;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Expenses\Types;
 use App\Models\CashboxTransaction;
-use App\Models\ExpenseType;
 use App\Models\IncomeSource;
 use App\Models\Log;
 use Illuminate\Http\Request;
