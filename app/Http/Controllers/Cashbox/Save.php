@@ -28,10 +28,10 @@ class Save extends Controller
             'is_expense' => Rule::requiredIf(!$request->is_income),
             'sum' => "required|numeric",
             'date' => "required",
-            'income_source_id' => "required_if:is_income,true|numeric",
-            'purpose_pay' => "required_with:income_source_id|numeric",
-            'income_source_parking_id' => "required_if:purpose_pay,2|numeric",
-            'expense_type_id' => "required_if:is_expense,true|numeric",
+            'income_source_id' => "required_if:is_income,true",
+            'purpose_pay' => "required_with:income_source_id",
+            'income_source_parking_id' => "required_if:purpose_pay,2",
+            'expense_type_id' => "required_if:is_expense,true",
         ]);
 
         $row = CashboxTransaction::find($request->id);
@@ -63,9 +63,12 @@ class Save extends Controller
         if ($row->income_source_id)
             Artisan::call("pays:overdue {$row->income_source_id}");
 
+        $cashbox = new Cashbox;
+
         return response()->json([
-            'row' => (new Cashbox)->row($row),
-        ], 400);
+            'row' => $cashbox->row($row),
+            'statistics' => $cashbox->getStatistics([$row->date]),
+        ]);
     }
 
     /**
