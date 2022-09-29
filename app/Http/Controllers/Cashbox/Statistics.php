@@ -11,15 +11,21 @@ trait Statistics
     /**
      * Формирует статистику по датам
      * 
-     * @param  array $dates
+     * @param  array|string $dates
+     * @param  null|string $date_to
      * @return array
      */
-    public function getStatistics($dates = [])
+    public function getStatistics($dates = [], $date_to = null)
     {
         $data = [];
 
         CashboxTransaction::selectRaw('sum(sum) as sum, type_pay, is_income, date')
-            ->whereIn('date', $dates)
+            ->when(is_array($dates), function ($query) use ($dates) {
+                $query->whereIn('date', $dates);
+            })
+            ->when(is_string($dates) and is_string($date_to), function ($query) use ($dates, $date_to) {
+                $query->whereBetween('date', [$dates, $date_to]);
+            })
             ->groupBy(['type_pay', 'is_income', 'date'])
             ->get()
             ->each(function ($row) use (&$data) {

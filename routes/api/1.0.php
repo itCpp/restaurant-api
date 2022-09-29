@@ -172,5 +172,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Сохранение или создание */
         Route::post('save', [App\Http\Controllers\Cashbox\Save::class, "save"]);
+
+        /** Данные календаря */
+        Route::post('calendar', [App\Http\Controllers\Cashbox\Calendar::class, "index"]);
     });
 });
