@@ -228,15 +228,16 @@ class Cashbox extends Controller
      */
     public function get(Request $request)
     {
-        if (!$row = CashboxTransaction::find($request->id))
+        if ($request->id and !$row = CashboxTransaction::find($request->id))
             return response()->json(['message' => "Информация не найдена"], 400);
 
-        $response['row'] = $row;
+        if (!($row ?? null))
+            $row = new CashboxTransaction;
 
         $expense_types = ExpenseType::lazy();
         $expense_subtypes = [];
 
-        if ($row->expense_type_id) {
+        if ($row->expense_type_id ?? null) {
 
             $expense_type = $expense_types->where('id', $row->expense_type_id)->values()->all()[0] ?? null;
 
@@ -253,13 +254,13 @@ class Cashbox extends Controller
                 ['is_free', false],
                 ['deleted_at', null]
             ])
-            ->when((bool) $row->income_source_id, function ($query) use ($row) {
+            ->when((bool) $row->income_source_id ?? null, function ($query) use ($row) {
                 $query->orWhere('id', $row->income_source_id);
             })
             ->orderBy('name')
             ->lazy();
 
-        if ($row->income_source_id) {
+        if ($row->income_source_id ?? null) {
 
             $income_source = $income_sources->where('id', $row->income_source_id)->values()->all()[0] ?? null;
 
@@ -279,7 +280,7 @@ class Cashbox extends Controller
         }
 
         return response()->json([
-            'row' => $row,
+            'row' => $row ?? [],
             'expense_types' => $expense_types->map(function ($row) {
                 return ['text' => $row->name, 'value' => $row->id];
             }),
