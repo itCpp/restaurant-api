@@ -21,8 +21,8 @@ class Calendar extends Controller
 
         return response()->json([
             'calendar' => $this->getStatistics(
-                $date->copy()->startOfMonth()->format("Y-m-d"),
-                $date->copy()->endOfMonth()->format("Y-m-d"),
+                $date->copy()->startOfMonth()->startOfWeek()->format("Y-m-d"),
+                $date->copy()->endOfMonth()->endOfWeek()->format("Y-m-d"),
             ),
         ]);
     }
