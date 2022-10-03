@@ -49,4 +49,22 @@ class IncomeSource extends Model
         'is_overdue' => "boolean",
         'settings' => AsCollection::class,
     ];
+
+    /**
+     * Additional services owned by the tenant.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function services()
+    {
+        return $this->belongsToMany(AdditionalService::class, 'income_source_additional_service')
+            ->withPivot(
+                'sum',
+                'type_pay',
+                'start_date',
+                'created_at',
+                'deleted_at',
+            )
+            ->wherePivot('deleted_at', null);
+    }
 }

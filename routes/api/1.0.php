@@ -176,4 +176,20 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Данные календаря */
         Route::post('calendar', [App\Http\Controllers\Cashbox\Calendar::class, "index"]);
     });
+
+    /** Маршрутизация дополнительных услуг */
+    Route::group(['prefix' => "services"], function () {
+
+        /** Список дополнительных услуг */
+        Route::get('/', [App\Http\Controllers\Tenants\AdditionalServices::class, "index"]);
+
+        /** Список всех дополнительных услуг */
+        Route::get('list', [App\Http\Controllers\Tenants\AdditionalServices::class, "list"]);
+
+        /** Сохраняет услугу */
+        Route::put('save', [App\Http\Controllers\Tenants\AdditionalServices::class, "save"]);
+
+        /** Удаляет услугу */
+        Route::post('drop', [App\Http\Controllers\Tenants\AdditionalServices::class, "drop"]);
+    });
 });
