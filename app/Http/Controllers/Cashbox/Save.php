@@ -44,8 +44,8 @@ class Save extends Controller
         $row->type_pay = $request->type_pay ?: 1;
         $row->date = $request->date ?: now()->format("Y-m-d");
         $row->month = $request->month ?: now()->create($row->date)->format("Y-m");
-        $row->period_start = $request->period_start;
-        $row->period_stop = $request->period_stop;
+        $row->period_start = $request->period_start ?: now()->create($row->month)->startOfMonth()->format("Y-m-d");
+        $row->period_stop = $request->period_stop ?: now()->create($row->month)->endOfMonth()->format("Y-m-d");
 
         if ($request->is_income)
             $row = $this->saveIncome($row, $request);
