@@ -131,6 +131,8 @@ class Incomes extends Controller
         $row->income_source_parking_id = $request->parking_id;
         $row->date = $request->date ?: now()->format("Y-m-d");
         $row->month = now()->create($row->date)->format("Y-m");
+        $row->period_start = $request->period_start ?: now()->create($row->month)->startOfMonth()->format("Y-m-d");
+        $row->period_stop = $request->period_stop ?: now()->create($row->month)->endOfMonth()->format("Y-m-d");
         $row->user_id = $request->user()->id;
 
         if (now()->create($row->date)->startOfDay() < now()->create($source->date)->startOfDay()) {
