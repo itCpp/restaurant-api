@@ -14,6 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('income_source_additional_service', function (Blueprint $table) {
+            $table->id();
             $table->bigInteger('income_source_id');
             $table->bigInteger('additional_service_id');
             $table->float('sum', 10, 2)->default(0);
@@ -21,7 +22,7 @@ return new class extends Migration
             $table->date('start_date')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            $table->unique(['income_source_id', 'additional_service_id'], 'income_service_id');
+            // $table->unique(['income_source_id', 'additional_service_id'], 'income_service_id');
         });
     }
 
