@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Incomes;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Incomes;
+use App\Http\Controllers\Tenants\AdditionalServices;
 use App\Models\CashboxTransaction;
 use App\Models\IncomePart;
 use App\Models\IncomesFile;
@@ -57,11 +58,11 @@ class Sources extends Controller
             }
         }
 
+        /** Дополнительные услуги */
+        $row->services = $row->services;
+
         /** Количество прикрепленных файлов */
         $row->files_count = IncomesFile::whereIncomeId($row->id)->count();
-
-        /** Имеется просроченный платеж */
-        $row->overdue = $this->checkOverdueAndFindNextPays($row);
 
         /** Оплаченный депозит */
         if (($row->is_deposit ?? null) === null)
@@ -70,6 +71,9 @@ class Sources extends Controller
         /** Оплаченный юридический адрес */
         if (($row->is_legal_address ?? null) === null)
             $row->is_legal_address = $this->getFixedPay($row->id, 4);
+
+        /** Имеется просроченный платеж */
+        $row->overdue = $this->checkOverdueAndFindNextPays($row);
 
         $row->to_sort = (int) $row->cabinet == trim($row->cabinet)
             ? (int) $row->cabinet : $row->cabinet;
