@@ -107,6 +107,9 @@ class Pays extends Controller
                 if (now()->create($key)->setDay($day_x) < now()->create($this->source->date))
                     $day_x = (int) now()->create($this->source->date)->format("d");
 
+                $day_x_internet = ($this->source->settings['internet_date'] ?? null)
+                    ? now()->create($this->source->settings['internet_date'])->format("d") : $day_x;
+
                 /** Дата оплаты */
                 $date_x = now()->create($key)->setDay($day_x)->format("Y-m-d");
 
@@ -150,6 +153,20 @@ class Pays extends Controller
                     $this->appendNotPayParkingList($rows, $key, $day_x, $date_x, $parking_id);
                 }
 
+                /** Интернет */
+                if ($this->source->is_internet and !$is_internet) {
+
+                    $month = now()->create($key)->format("m");
+
+                    $date_start_internet = $this->source->settings['internet_date'] ?? now()->format("Y-m-d");
+                    $date_x_internet = now()->setMonth($month)->setDay($day_x_internet);
+                    $internet_price = (int) $this->source->settings['internet_price'] ?? 0;
+
+                    if ($date_start_internet < $date_x_internet and $date_x_internet < now()) {
+                        $rows[] = $this->getEmptyPayRow($this->source->id, 5, $key, (int) $day_x_internet, $internet_price);
+                    }
+                }
+
                 foreach ($rows as &$row) {
 
                     if ($row->income_source_parking_id ?? null)
@@ -161,8 +178,6 @@ class Pays extends Controller
                 return [
                     'month' => $key,
                     'rows' => $rows,
-                    $date_now_x,
-                    $date_now
                 ];
             })
             ->values()
