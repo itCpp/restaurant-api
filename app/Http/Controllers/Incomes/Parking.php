@@ -89,7 +89,7 @@ class Parking extends Controller
     public function isOverdue(IncomeSourceParking &$row)
     {
         $date_start = now()->create($row->date_from);
-        $date_end = now();
+        $date_end = $row->date_to ? now()->create($row->date_to) : now();
 
         $pays = [];
         $all_months = [];
