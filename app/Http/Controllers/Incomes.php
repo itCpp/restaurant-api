@@ -213,7 +213,7 @@ class Incomes extends Controller
         }
 
         if ($row->parking = $this->getParkingInfo($row->income_source_parking_id))
-            $row->purpose_name .= " " . $row->parking->parking_place;
+            $row->purpose_name = trim($row->purpose_name . " " . $row->parking->parking_place);
 
         return $row;
     }

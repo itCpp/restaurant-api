@@ -42,8 +42,8 @@ class Tenants extends Controller
         $files = (new Files($request))->getFilesList($request);
 
         return response()->json([
-            'row' => $row,
             'pays' => $pays,
+            'row' => $row,
             'files' => $files,
             'purposes' => Purposes::getAll(),
         ]);
