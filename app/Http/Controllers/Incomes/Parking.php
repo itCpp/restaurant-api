@@ -89,7 +89,7 @@ class Parking extends Controller
     public function isOverdue(IncomeSourceParking &$row)
     {
         $date_start = now()->create($row->date_from);
-        $date_end = now();
+        $date_end = $row->date_to ? now()->create($row->date_to) : now();
 
         $pays = [];
         $all_months = [];
@@ -129,15 +129,18 @@ class Parking extends Controller
         $overdue = false;
         $now_month = now()->format("Y-m");
         $last_pay = null;
+        $date_x = now()->setDay($row->settings['pay_day'] ?? 20);
 
         foreach ($row->pays as $pay) {
 
             if (count($pay['rows']))
                 $all_months[] = $pay['month'];
 
-            if ($pay['month'] === $now_month and !count($pay['rows']))
+            $date_x_check = now()->create($pay['month'])->setDay($row->settings['pay_day'] ?? 20);
+
+            if (now() > $date_x_check and $pay['month'] === $now_month and !count($pay['rows']))
                 $overdue = true;
-            else if (!count($pay['rows']))
+            else if (now() > $date_x_check and !count($pay['rows']))
                 $overdue = true;
 
             if ((bool) $last_pay)
