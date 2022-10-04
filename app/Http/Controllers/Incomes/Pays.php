@@ -19,6 +19,13 @@ class Pays extends Controller
     protected $toArray = false;
 
     /**
+     * Объект работы с входящими платежами
+     * 
+     * @var \App\Http\Controllers\Incomes
+     */
+    protected $incomes;
+
+    /**
      * Выводит данные о выплатах
      * 
      * @param  \Illuminate\Http\Request $request
@@ -57,13 +64,8 @@ class Pays extends Controller
             ->when((bool) $source_id, function ($query) use ($source_id) {
                 $query->whereIncomeSourceId($source_id);
             })
-            // ->when((bool) $source->date ?? null, function ($query) use ($source) {
-            //     $query->where('date', '>=', $source->date);
-            // })
-            // ->when((bool) $source->date_to ?? null, function ($query) use ($source) {
-            //     $query->where('date', '<=', $source->date_to);
-            // })
             ->orderBy('id', 'DESC')
+            ->orderBy('date', 'DESC')
             ->get()
             ->map(function ($row) {
 
@@ -98,6 +100,7 @@ class Pays extends Controller
         return collect($data ?? [])->sortKeysDesc()
             ->map(function ($rows, $key) {
 
+                /** День оплаты */
                 $day_x = $this->day_x;
 
                 /** Смещение даты оплаты, если аренда началась позже */
@@ -108,7 +111,7 @@ class Pays extends Controller
                 $date_x = now()->create($key)->setDay($day_x)->format("Y-m-d");
 
                 $is_rent = false; # Оплата аренды
-                $is_parking = false; # Оплата парковки
+                // $is_parking = false; # Оплата парковки
                 $parking_id = []; # Идентификаторы оплаченных парковок
                 $is_internet = false; # Оплата интернета
 
@@ -117,7 +120,7 @@ class Pays extends Controller
                 if ((int) now()->format("d") > $day_x)
                     $date_now = now()->setDay($day_x)->subMonth();
 
-                $date_now_x = now()->create($date_x)->subMonth();
+                $date_now_x = now()->create($date_x);
 
                 /** Проверка существующих типов оплаты */
                 foreach ($rows as $row) {
@@ -126,7 +129,7 @@ class Pays extends Controller
                         $is_rent = true;
 
                     if ($row->purpose_pay == 2) {
-                        $is_parking = true;
+                        // $is_parking = true;
 
                         if ($date_now > now()->create($row->date)->subMonth())
                             $parking_id[] = $row->income_source_parking_id;
@@ -137,13 +140,13 @@ class Pays extends Controller
                 }
 
                 /** Проверка необходимости оплаты аренды */
-                if ($this->source->is_rent and !$is_rent and $date_now_x > now()->create($this->source->date)) {
+                if ($this->source->is_rent and !$is_rent and $date_now_x > now()->create($this->source->date) and $date_now_x < now()) {
                     $pay_sum = round((float) $this->source->space * (float) $this->source->price, 2);
                     $rows[] = $this->getEmptyPayRow($this->source->id, 1, $key, $day_x, $pay_sum);
                 }
 
                 /** Проверка оплаченных парковок */
-                if ($this->source->is_parking and $date_now > $date_now_x) {
+                if ($this->source->is_parking and $date_now_x < $date_now and $date_now_x < now()) {
                     $this->appendNotPayParkingList($rows, $key, $day_x, $date_x, $parking_id);
                 }
 
@@ -158,6 +161,8 @@ class Pays extends Controller
                 return [
                     'month' => $key,
                     'rows' => $rows,
+                    $date_now_x,
+                    $date_now
                 ];
             })
             ->values()
