@@ -57,9 +57,19 @@ class Sources extends Controller
             }
         }
 
+        /** Количество прикрепленных файлов */
         $row->files_count = IncomesFile::whereIncomeId($row->id)->count();
 
+        /** Имеется просроченный платеж */
         $row->overdue = $this->checkOverdueAndFindNextPays($row);
+
+        /** Оплаченный депозит */
+        if (($row->is_deposit ?? null) === null)
+            $row->is_deposit = $this->getFixedPay($row->id, 3);
+
+        /** Оплаченный юридический адрес */
+        if (($row->is_legal_address ?? null) === null)
+            $row->is_legal_address = $this->getFixedPay($row->id, 4);
 
         $row->to_sort = (int) $row->cabinet == trim($row->cabinet)
             ? (int) $row->cabinet : $row->cabinet;
@@ -90,41 +100,30 @@ class Sources extends Controller
         /** Следующие платежи */
         $next_pays = [];
 
+        /** День оплаты по договору */
         $pay_day = $pay_day = $row->settings['pay_day'] ?? false;
         $row->pay_day = $pay_day ?: 20;
 
+        /** Предельная дата оплаты по договору */
         $date_last_to = (int) now()->format('d') >= $row->pay_day
-            ? now()->addMonth()->setDay(20)->format("Y-m-d")
-            : now()->setDay(20)->format("Y-m-d");
+            ? now()->addMonth()->setDay($row->pay_day)->format("Y-m-d")
+            : now()->setDay($row->pay_day)->format("Y-m-d");
 
-        if (!$row->is_deposit ?? null) {
-            $row->is_deposit = (bool) CashboxTransaction::where([
-                ['income_source_id', $row->id],
-                ['purpose_pay', 3]
-            ])->count();
-        }
-
-        if (!$row->is_legal_address ?? null) {
-            $row->is_legal_address = (bool) CashboxTransaction::where([
-                ['income_source_id', $row->id],
-                ['purpose_pay', 4]
-            ])->count();
-        }
-
-        foreach (Purposes::getEveryMonthId() as $value) {
+        /** Последние платежи по ежемесячным расчетам */
+        foreach (Purposes::getEveryMonthId() as $v) {
 
             $last = CashboxTransaction::whereIncomeSourceId($row->id)
-                ->wherePurposePay($value)
-                ->where('date', '>=', $row->date ?? now())
+                ->wherePurposePay($v)
+                // ->where('date', '>=', $row->date ?? now())
                 ->where('date', '<=', $date_last_to)
-                ->orderBy('date', "DESC")
+                ->orderBy('month', "DESC")
                 ->first();
 
             if (!$last)
                 continue;
 
             $last_every_month[] = $last;
-            $last_months[$value][] = now()->create($last->date)->format("Y-m");
+            $last_months["p{$v}"][] = now()->create($last->month ?: $last->date)->format("Y-m");
         }
 
         $row->last_every_month = $last_every_month;
@@ -144,7 +143,7 @@ class Sources extends Controller
 
         $check_month = $next_date->copy()->format("Y-m");
 
-        if (!in_array($check_month, $last_months[1] ?? [])) {
+        if (!in_array($check_month, $last_months["p1"] ?? [])) {
             $next_pays[] = [
                 'date' => $next_date,
                 'price' => round(((float) $row->price * (float) $row->space), 2),
@@ -158,7 +157,7 @@ class Sources extends Controller
             self::findNextPaysParking($row, $next_pays, $next_date);
         }
 
-        if ($row->is_internet and !in_array($check_month, $last_months[5] ?? [])) {
+        if ($row->is_internet and !in_array($check_month, $last_months["p5"] ?? [])) {
             $next_pays[] = [
                 'date' => $next_date,
                 'price' => $row->settings['internet_price'] ?? 0,
@@ -225,6 +224,20 @@ class Sources extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * Получает наличие фиксированного платежа
+     * 
+     * @param  int  $source_id
+     * @param  int  $purpose_id
+     * @return bool
+     */
+    public static function getFixedPay($source_id, $purpose_id)
+    {
+        return (bool) CashboxTransaction::whereIncomeSourceId($source_id)
+            ->wherePurposePay($purpose_id)
+            ->count();
     }
 
     /**

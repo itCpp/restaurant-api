@@ -100,7 +100,7 @@ class Incomes extends Controller
     public function save(Request $request)
     {
         $request->validate([
-            'sum' => "required|numeric",
+            'sum' => "required|numeric|not_in:0",
             'income_part_id' => "required|integer",
             'income_source_id' => "required|integer",
             'purpose_pay' => "required|integer",
@@ -122,7 +122,7 @@ class Incomes extends Controller
         if (!$row = CashboxTransaction::find($request->id))
             $row = new CashboxTransaction;
 
-        $row->sum = $request->sum;
+        $row->sum = abs($request->sum);
         $row->type_pay = $request->type_pay;
         $row->purpose_pay = $request->purpose_pay;
         $row->is_income = true;
