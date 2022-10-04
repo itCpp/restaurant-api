@@ -314,7 +314,7 @@ class Sources extends Controller
         $row->is_internet = (bool) $request->is_internet;
         $row->settings = $request->settings ?? [];
         $row->is_overdue = (bool) (new Incomes)->isOverdue($row);
-        $row->is_rent = $row->part_id;
+        $row->is_rent = (bool) $request->is_rent;
 
         $row->save();
 
@@ -324,6 +324,7 @@ class Sources extends Controller
 
         return response()->json([
             'row' => $row,
+            'pays' => $request->toPays ? (new Incomes)->view($request, $row) : [],
         ]);
     }
 }

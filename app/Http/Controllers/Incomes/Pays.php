@@ -160,15 +160,10 @@ class Pays extends Controller
 
                     $date_start_internet = $this->source->settings['internet_date'] ?? now()->format("Y-m-d");
                     $date_x_internet = now()->setMonth($month)->setDay($day_x_internet);
+                    $internet_price = (int) $this->source->settings['internet_price'] ?? 0;
 
                     if ($date_start_internet < $date_x_internet and $date_x_internet < now()) {
-                        $rows[] = $this->getEmptyPayRow(
-                            $this->source->id,
-                            5,
-                            $key,
-                            (int) $day_x_internet,
-                            (int) $this->source->settings['internet_price'] ?? 0,
-                        );
+                        $rows[] = $this->getEmptyPayRow($this->source->id, 5, $key, (int) $day_x_internet, $internet_price);
                     }
                 }
 
