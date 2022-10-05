@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Employees\Salaries;
 
+use App\Models\Employee;
+
 trait Result
 {
     /**
@@ -13,18 +15,31 @@ trait Result
     {
         $this->data['rows'] = collect($this->data['users'] ?? [])->sortBy("fullname")
             ->map(function ($row) {
-
-                /** Выплаченные довольствия за период */
-                $row->prepayment = $this->data['data']['prepayments'][$row->id] ?? 0;
-
-                /** Остаток получки */
-                $row->balance = $row->salary - $row->prepayment;
-
-                return $row;
+                return $this->getRowResult($row);
             })
             ->values()
             ->all();
 
         return $this;
+    }
+
+    /**
+     * Формирование итоговой строки
+     * 
+     * @param  \App\Models\Employee  $row
+     * @return \App\Models\Employee
+     */
+    public function getRowResult(Employee $row)
+    {
+        /** К выплате */
+        $row->toPayoff = $row->salary;
+
+        /** Выплаченные довольствия за период */
+        $row->prepayment = $this->data['data']['prepayments'][$row->id] ?? 0;
+
+        /** Остаток получки */
+        $row->balance = $row->toPayoff - $row->prepayment;
+
+        return $row;
     }
 }
