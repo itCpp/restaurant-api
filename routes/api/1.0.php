@@ -136,6 +136,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Применение нового оклада */
         Route::post('salary/set', [App\Http\Controllers\Employees\Salaries::class, "set"]);
+
+        /** Расчет получки */
+        Route::group(['prefix' => "salary"], function () {
+
+            /** Данные */
+            Route::post('/', [App\Http\Controllers\Employees\Salaries::class, "index"]);
+        });
     });
 
     /** Личная страница арендатора */

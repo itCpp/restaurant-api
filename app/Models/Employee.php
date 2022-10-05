@@ -68,7 +68,7 @@ class Employee extends Model
         $time = "";
 
         if ($this->personal_data['work_shedule_time_with'] ?? null)
-            $time .= "c " . $this->personal_data['work_shedule_time_with'] . " ";
+            $time .= "c " . $this->personal_data['work_shedule_time_with'];
 
         if ($this->personal_data['work_shedule_time_on'] ?? null)
             $time .= " до " . $this->personal_data['work_shedule_time_on'] . " ";
