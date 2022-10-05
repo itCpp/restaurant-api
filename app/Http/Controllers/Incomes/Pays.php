@@ -212,6 +212,8 @@ class Pays extends Controller
                 ? now()->format("Y-m")
                 : now()->subMonth()->format("Y-m"));
 
+        $this->month_end = now()->format("Y-m");
+
         $this->months = [];
 
         while ($this->date_check->format("Y-m") <= $this->month_end) {
@@ -348,6 +350,12 @@ class Pays extends Controller
 
             $check_date = $date->copy()->subMonth();
 
+            // Разовая оплата
+            if ($type_pay == 1 and $month == $start_date->copy()->format("Y-m")) {
+                $rows[] = $this->createEmptyNoPayServiceRow($service, $id, $month, $day, $sum, $start_date->copy()->format("Y-m-d"));
+                continue;
+            }
+
             if ($check_date >= $start_date and $date < now()) {
 
                 $rowDate = $date->copy()->subDay()->format("Y-m-d");
@@ -381,10 +389,6 @@ class Pays extends Controller
                 }
                 // Ежедневная оплата
                 else if ($type_pay == 2) {
-                }
-                // Разовая оплата
-                else if ($type_pay == 1 and $month == now()->create($rowDate)->format("Y-m")) {
-                    $rows[] = $this->createEmptyNoPayServiceRow($service, $id, $month, $day, $sum, $start_date->copy()->format("Y-m-d"));
                 }
             }
         }
