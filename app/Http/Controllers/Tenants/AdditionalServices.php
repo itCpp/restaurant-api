@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenants;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Incomes;
 use App\Models\AdditionalService;
 use App\Models\IncomeSource;
 use App\Models\Log;
@@ -128,6 +129,7 @@ class AdditionalServices extends Controller
         return response()->json([
             'row' => $row,
             'list' => $this->getServices($row->services),
+            'pays' => $request->toPays ? (new Incomes)->view($request, $row) : null,
         ]);
     }
 

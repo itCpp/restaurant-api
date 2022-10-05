@@ -129,6 +129,7 @@ class Incomes extends Controller
         $row->income_part_id = $request->income_part_id;
         $row->income_source_id = $source->id;
         $row->income_source_parking_id = $request->parking_id;
+        $row->income_source_service_id = $request->service_id; 
         $row->date = $request->date ?: now()->format("Y-m-d");
         $row->month = now()->create($row->date)->format("Y-m");
         $row->period_start = $request->period_start ?: now()->create($row->month)->startOfMonth()->format("Y-m-d");

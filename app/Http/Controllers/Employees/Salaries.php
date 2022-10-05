@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Employees;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Employees;
+use App\Http\Controllers\Employees\Salaries\Salaries as SalariesSalaries;
 use App\Models\Employee;
 use App\Models\EmployeeSalary;
 use App\Models\Log;
@@ -11,6 +12,17 @@ use Illuminate\Http\Request;
 
 class Salaries extends Controller
 {
+    /**
+     * Вывод получки сотрудника
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index(Request $request)
+    {
+        return SalariesSalaries::index($request);
+    }
+
     /**
      * Применение оклада
      * 

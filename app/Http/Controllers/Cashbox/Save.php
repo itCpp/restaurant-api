@@ -22,16 +22,21 @@ class Save extends Controller
      */
     public function save(Request $request)
     {
-        $request->validate([
+        $rules = [
             'is_income' => Rule::requiredIf(!$request->is_expense),
             'is_expense' => Rule::requiredIf(!$request->is_income),
             'sum' => "required|numeric",
             'date' => "required",
-            'income_source_id' => "required_if:is_income,true",
             'purpose_pay' => "required_with:income_source_id",
             'income_source_parking_id' => "required_if:purpose_pay,2",
             'expense_type_id' => "required_if:is_expense,true",
-        ]);
+        ];
+
+        if ($request->income_type_pay == "tenant") {
+            $rules['income_source_id'] = "required_if:is_income,true";
+        }
+
+        $request->validate($rules);
 
         $row = CashboxTransaction::find($request->id);
 
@@ -84,6 +89,7 @@ class Save extends Controller
         $row->purpose_pay = $request->purpose_pay;
         $row->income_source_id = $request->income_source_id;
         $row->income_source_parking_id = $request->income_source_parking_id;
+        $row->income_type_pay = $request->income_type_pay;
 
         if ($source = IncomeSource::find($row->income_source_id))
             $row->income_part_id = $source->part_id;
@@ -93,6 +99,12 @@ class Save extends Controller
         $row->name = null;
         $row->expense_type_id = null;
         $row->expense_subtype_id = null;
+
+        if ($row->income_type_pay == "parking_one") {
+            $row->period_start = null;
+            $row->period_stop = null;
+            $row->name = "Гостевая парковка";
+        }
 
         return $row;
     }
@@ -106,7 +118,7 @@ class Save extends Controller
      */
     public function saveExpense(CashboxTransaction $row, Request $request)
     {
-        $row->is_expense = false;
+        $row->is_expense = true;
         $row->sum = abs($request->sum) * (-1);
         $row->name = $request->name;
         $row->expense_type_id = $request->expense_type_id;
@@ -116,10 +128,11 @@ class Save extends Controller
             $row->expense_subtype_id = $this->createExpenseSubtype($request->expense_type_id, $request->expense_subtype_id);
 
         /** Обнуление прихода */
-        $row->is_income = true;
+        $row->is_income = false;
         $row->purpose_pay = null;
         $row->income_source_id = null;
         $row->income_source_parking_id = null;
+        $row->income_type_pay = null;
 
         return $row;
     }

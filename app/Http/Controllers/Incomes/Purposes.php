@@ -43,6 +43,12 @@ class Purposes extends Controller
             'every_month' => true,
             'icon' => "internet explorer"
         ],
+        [
+            'id' => 6,
+            'name' => "Доп. услуги",
+            'every_month' => true,
+            'icon' => "add to cart"
+        ],
     ];
 
     /**

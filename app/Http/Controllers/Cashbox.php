@@ -75,7 +75,7 @@ class Cashbox extends Controller
     {
         $row->source = $this->getSource($row->income_source_id);
 
-        $row->name = $row->source->name ?? null;
+        $row->name = $row->source->name ?? $row->name;
 
         $purpose = Purposes::collect()->where('id', $row->purpose_pay)->values()->all()[0] ?? null;
 
@@ -86,6 +86,10 @@ class Cashbox extends Controller
         }
 
         $row->purpose = $purpose;
+
+        if ($row->source and $row->income_source_service_id) {
+            $row->comment = $row->source->services->where('id', $row->income_source_service_id)->all()[0]->name ?? null;
+        }
 
         return $row;
     }
