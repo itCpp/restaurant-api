@@ -89,6 +89,7 @@ class Save extends Controller
         $row->purpose_pay = $request->purpose_pay;
         $row->income_source_id = $request->income_source_id;
         $row->income_source_parking_id = $request->income_source_parking_id;
+        $row->income_type_pay = $request->income_type_pay;
 
         if ($source = IncomeSource::find($row->income_source_id))
             $row->income_part_id = $source->part_id;
@@ -99,7 +100,7 @@ class Save extends Controller
         $row->expense_type_id = null;
         $row->expense_subtype_id = null;
 
-        if ($request->income_type_pay == "parking_one") {
+        if ($row->income_type_pay == "parking_one") {
             $row->period_start = null;
             $row->period_stop = null;
             $row->name = "Гостевая парковка";
@@ -131,6 +132,7 @@ class Save extends Controller
         $row->purpose_pay = null;
         $row->income_source_id = null;
         $row->income_source_parking_id = null;
+        $row->income_type_pay = null;
 
         return $row;
     }
