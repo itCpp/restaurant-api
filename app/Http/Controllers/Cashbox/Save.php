@@ -22,16 +22,21 @@ class Save extends Controller
      */
     public function save(Request $request)
     {
-        $request->validate([
+        $rules = [
             'is_income' => Rule::requiredIf(!$request->is_expense),
             'is_expense' => Rule::requiredIf(!$request->is_income),
             'sum' => "required|numeric",
             'date' => "required",
-            'income_source_id' => "required_if:is_income,true",
             'purpose_pay' => "required_with:income_source_id",
             'income_source_parking_id' => "required_if:purpose_pay,2",
             'expense_type_id' => "required_if:is_expense,true",
-        ]);
+        ];
+
+        if ($request->income_type_pay == "tenant") {
+            $rules['income_source_id'] = "required_if:is_income,true";
+        }
+
+        $request->validate($rules);
 
         $row = CashboxTransaction::find($request->id);
 
@@ -93,6 +98,12 @@ class Save extends Controller
         $row->name = null;
         $row->expense_type_id = null;
         $row->expense_subtype_id = null;
+
+        if ($request->income_type_pay == "parking_one") {
+            $row->period_start = null;
+            $row->period_stop = null;
+            $row->name = "Гостевая парковка";
+        }
 
         return $row;
     }
