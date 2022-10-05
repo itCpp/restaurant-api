@@ -37,7 +37,7 @@ class Employees extends Controller
      * @param  \App\Models\Employee $row
      * @return \App\Models\Employee
      */
-    public function employee(Employee $row)
+    public static function employee(Employee $row)
     {
         $row->fullname = $row->fullname;
         $row->work_shedule = $row->work_shedule;

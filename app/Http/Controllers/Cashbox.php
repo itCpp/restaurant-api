@@ -75,7 +75,7 @@ class Cashbox extends Controller
     {
         $row->source = $this->getSource($row->income_source_id);
 
-        $row->name = $row->source->name ?? null;
+        $row->name = $row->source->name ?? $row->name;
 
         $purpose = Purposes::collect()->where('id', $row->purpose_pay)->values()->all()[0] ?? null;
 
