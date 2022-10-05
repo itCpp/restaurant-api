@@ -87,6 +87,10 @@ class Cashbox extends Controller
 
         $row->purpose = $purpose;
 
+        if ($row->source and $row->income_source_service_id) {
+            $row->comment = $row->source->services->where('id', $row->income_source_service_id)->all()[0]->name ?? null;
+        }
+
         return $row;
     }
 

@@ -70,6 +70,8 @@ class Pays extends Controller
             ->map(function ($row) {
 
                 $row = $this->incomes->getRowCashboxTransaction($row);
+                $name = $this->source->services->where('id', $row->income_source_service_id)->all()[0]->name ?? null;
+                $row->purpose_name = $name ?: $row->purpose_name;
 
                 $this->data[$row->month][] = $row;
 
@@ -114,9 +116,9 @@ class Pays extends Controller
                 $date_x = now()->create($key)->setDay($day_x)->format("Y-m-d");
 
                 $is_rent = false; # Оплата аренды
-                // $is_parking = false; # Оплата парковки
                 $parking_id = []; # Идентификаторы оплаченных парковок
                 $is_internet = false; # Оплата интернета
+                $services_id = []; # Оплата дополнительных услуг
 
                 $date_now = now()->setDay($day_x);
 
@@ -132,14 +134,18 @@ class Pays extends Controller
                         $is_rent = true;
 
                     if ($row->purpose_pay == 2) {
-                        // $is_parking = true;
-
                         if ($date_now > now()->create($row->date)->subMonth())
                             $parking_id[] = $row->income_source_parking_id;
                     }
 
+                    /** Оплаченный интернет */
                     if ($row->purpose_pay == 5)
                         $is_internet = true;
+
+                    /** Оплаченные дополнительные услуги */
+                    if ($row->purpose_pay == 6) {
+                        $services_id[] = $row->income_source_service_id;
+                    }
                 }
 
                 /** Проверка необходимости оплаты аренды */
@@ -166,6 +172,8 @@ class Pays extends Controller
                         $rows[] = $this->getEmptyPayRow($this->source->id, 5, $key, (int) $day_x_internet, $internet_price);
                     }
                 }
+
+                $this->addRowsPaysAdditionalServices($rows, $key, $day_x, $date_x, $services_id);
 
                 foreach ($rows as &$row) {
 
@@ -270,6 +278,7 @@ class Pays extends Controller
         $row->purpose_pay = $purpose_pay;
         $row->pay_sum = $pay_sum;
         $row->date = now()->create($month ?: now())->setDay($day_x ?: 20)->format("Y-m-d");
+        $row->noPay = true;
 
         return $this->incomes->getRowCashboxTransaction($row);
     }
@@ -305,5 +314,103 @@ class Pays extends Controller
         }
 
         return $rows;
+    }
+
+    /**
+     * Дополняет список просроченных платежей по дополнительным услугам
+     * 
+     * @param  array $rows
+     * @param  string|null $month
+     * @param  string|null $day_x
+     * @param  string|null $date_x
+     * @param  array $ids
+     * @return array
+     */
+    public function addRowsPaysAdditionalServices(&$rows, $month, $day_x, $date_x, $ids)
+    {
+        $month = now()->create($date_x)->format("Y-m");
+        $id = $this->source->id;
+
+        foreach ($this->source->services as $service) {
+
+            if (in_array($service->id, $ids))
+                continue;
+
+            $type_pay = $service->pivot->type_pay ?? null;
+
+            if ($type_pay === null)
+                continue;
+
+            $start_date = now()->create($service->pivot->start_date ?? $service->created_at);
+            $day = (int) now()->create($start_date)->format("d");
+            $date = now()->create($month)->setDay($day)->addMonth();
+            $sum = $service->pivot->sum ?? 0;
+
+            $check_date = $date->copy()->subMonth();
+
+            if ($check_date >= $start_date and $date < now()) {
+
+                $rowDate = $date->copy()->subDay()->format("Y-m-d");
+
+                // Ежегодная оплата
+                if ($type_pay == 7 and $start_date->addYear() > $date) {
+                    $rows[] = $this->createEmptyNoPayServiceRow($service, $id, $month, $day, $sum, $rowDate);
+                }
+                // Полугодовая оплата
+                else if ($type_pay == 6) {
+                }
+                // Квартальная оплата
+                else if ($type_pay == 5) {
+                }
+                // Ежемесячная оплата
+                else if ($type_pay == 4) {
+                    $rows[] = $this->createEmptyNoPayServiceRow($service, $id, $month, $day, $sum, $rowDate);
+                }
+                // Еженедельная оплата
+                else if ($type_pay == 3) {
+
+                    $week = $date->copy()->subDay()->endOfWeek();
+
+                    while ($week > $check_date) {
+
+                        if ($week < $check_date->copy()->endOfMonth()) {
+                            $rows[] = $this->createEmptyNoPayServiceRow($service, $id, $month, $day, $sum, $week->copy()->format("Y-m-d"));
+                        }
+                        $week->subDays(7);
+                    }
+                }
+                // Ежедневная оплата
+                else if ($type_pay == 2) {
+                }
+                // Разовая оплата
+                else if ($type_pay == 1 and $month == now()->create($rowDate)->format("Y-m")) {
+                    $rows[] = $this->createEmptyNoPayServiceRow($service, $id, $month, $day, $sum, $start_date->copy()->format("Y-m-d"));
+                }
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Формирует строку неоплаченной доп услуги
+     * 
+     * @param  \App\Models\AdditionalService  $service
+     * @param  int  $id
+     * @param  string  $month
+     * @param  int|string  $day
+     * @param  int  $sum
+     * @param  string  $date
+     * @return \App\Models\CashboxTransaction
+     */
+    public function createEmptyNoPayServiceRow($service, $id, $month, $day, $sum, $date)
+    {
+        $row = $this->getEmptyPayRow($id, 6, $month, $day, $sum);
+
+        $row->purpose_name = $service->name ?: $row->name;
+        $row->income_source_service_id = $service->id;
+        $row->date = $date;
+
+        return $row;
     }
 }
