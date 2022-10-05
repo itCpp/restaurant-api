@@ -117,7 +117,7 @@ class Save extends Controller
      */
     public function saveExpense(CashboxTransaction $row, Request $request)
     {
-        $row->is_expense = false;
+        $row->is_expense = true;
         $row->sum = abs($request->sum) * (-1);
         $row->name = $request->name;
         $row->expense_type_id = $request->expense_type_id;
@@ -127,7 +127,7 @@ class Save extends Controller
             $row->expense_subtype_id = $this->createExpenseSubtype($request->expense_type_id, $request->expense_subtype_id);
 
         /** Обнуление прихода */
-        $row->is_income = true;
+        $row->is_income = false;
         $row->purpose_pay = null;
         $row->income_source_id = null;
         $row->income_source_parking_id = null;
