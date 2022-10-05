@@ -147,7 +147,7 @@ class Sources extends Controller
 
         $check_month = $next_date->copy()->format("Y-m");
 
-        if (!in_array($check_month, $last_months["p1"] ?? [])) {
+        if ($row->is_rent and !in_array($check_month, $last_months["p1"] ?? [])) {
             $next_pays[] = [
                 'date' => $next_date,
                 'price' => round(((float) $row->price * (float) $row->space), 2),
