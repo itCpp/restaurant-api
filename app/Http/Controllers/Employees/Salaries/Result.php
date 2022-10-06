@@ -37,7 +37,7 @@ trait Result
         $row->toPayoff = $this->getToPayoff($row);
 
         /** Остаток получки */
-        $row->balance = $row->toPayoff - $row->prepayment;
+        $row->balance = round($row->toPayoff - $row->prepayment);
 
         return $row;
     }
