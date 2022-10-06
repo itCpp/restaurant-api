@@ -39,6 +39,9 @@ trait Result
         /** Остаток получки */
         $row->balance = round($row->toPayoff - $row->prepayment);
 
+        /** Уволенный сотрудник */
+        $row->is_fired = ($row->work_stop and $row->work_stop > request()->start);
+
         return $row;
     }
 
