@@ -76,7 +76,7 @@ trait Result
             $parts[$i] = $row->salary_one_day ? 0 : $part;
         }
 
-        foreach ($row->shedule as $day => $data) {
+        foreach ($row->shedule ?? [] as $day => $data) {
 
             $day = (int) $day;
 
@@ -104,6 +104,19 @@ trait Result
             else if (!$row->salary_one_day) {
                 $parts[$day] = $part;
             }
+        }
+
+        $start_day = $row->work_start ? now()->create($row->work_start) : null;
+        $stop_day = $row->work_stop ? now()->create($row->work_stop) : null;
+
+        /** Корректировка по дате начала и окончания работы */
+        foreach ($parts ?? [] as $day => $part) {
+
+            if ($start_day and $start_day > now()->create(request()->month)->setDay($day))
+                $parts[$day] = 0;
+
+            if ($stop_day and $stop_day < now()->create(request()->month)->setDay($day))
+                $parts[$day] = 0;
         }
 
         return $parts ?? [];

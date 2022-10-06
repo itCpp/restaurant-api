@@ -44,6 +44,7 @@ class Salaries
         $days = now()->create($start)->subDay()->diff($stop)->days ?? 0;
 
         $request->merge([
+            'month' => now()->create($request->month ?: now())->format("Y-m"),
             'start' => $start,
             'stop' => $stop,
             'days' => $days,

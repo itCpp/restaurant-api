@@ -28,7 +28,11 @@ trait Users
                 $query->where(function ($query) {
                     $query->where('employee_work_dates.work_start', '<=', request()->stop)
                         ->orWhere('employee_work_dates.work_start', null);
-                });
+                })
+                    ->where(function ($query) {
+                        $query->where('employee_work_dates.work_stop', '>=', request()->start)
+                            ->orWhere('employee_work_dates.work_stop', null);
+                    });
             })
             ->orderBy('employee_work_dates.work_start')
             ->distinct()
