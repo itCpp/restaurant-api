@@ -70,10 +70,11 @@ trait Result
     public function getSalaryParts(Employee $row)
     {
         $days = request()->days ?: 30;
-        $part = $row->salary / $days;
+        $part = $row->salary_one_day ? $row->salary : $row->salary / $days;
 
-        for ($i = 1; $i <= $days; $i++)
-            $parts[$i] = $part;
+        for ($i = 1; $i <= $days; $i++) {
+            $parts[$i] = $row->salary_one_day ? 0 : $part;
+        }
 
         foreach ($row->shedule as $day => $data) {
 
@@ -100,7 +101,7 @@ trait Result
                 $parts[$day] = $part * 2;
             }
             /** По графику */
-            else {
+            else if (!$row->salary_one_day) {
                 $parts[$day] = $part;
             }
         }

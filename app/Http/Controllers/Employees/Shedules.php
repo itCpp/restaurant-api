@@ -31,7 +31,7 @@ class Shedules extends Controller
      * @var array
      */
     protected $options = [
-        ['value' => null, 'text' => "Н", 'comment' => "По графику"],
+        ['value' => null, 'text' => "Г", 'comment' => "По графику"],
         ['value' => 1, 'text' => "Р", 'comment' => "Рабочий день", 'color' => "green"],
         ['value' => 2, 'text' => "Р/2", 'comment' => "Неполный рабочий день", 'color' => "blue"],
         ['value' => 3, 'text' => "В", 'comment' => "Выходной", 'color' => "red"],
