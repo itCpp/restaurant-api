@@ -143,6 +143,12 @@ Route::middleware('auth:sanctum')->group(function () {
             /** Данные */
             Route::post('/', [App\Http\Controllers\Employees\Salaries::class, "index"]);
         });
+
+        /** График работы сотрудника */
+        Route::post('shedule', [App\Http\Controllers\Employees\Shedules::class, "index"]);
+
+        /** Применяет значение за день */
+        Route::put('shedule/set', [App\Http\Controllers\Employees\Shedules::class, "set"]);
     });
 
     /** Личная страница арендатора */
