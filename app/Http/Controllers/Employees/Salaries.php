@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Employees;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Employees;
 use App\Http\Controllers\Employees\Salaries\Salaries as SalariesSalaries;
+use App\Http\Controllers\Expenses;
 use App\Models\Employee;
 use App\Models\EmployeeSalary;
 use App\Models\Log;
@@ -68,5 +69,23 @@ class Salaries extends Controller
             'row' => $row,
             'salary' => $salary,
         ]);
+    }
+
+    /**
+     * Выдача получки
+     * 
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function save(Request $request)
+    {
+        $start = now()->create($request->period_start)->format("d");
+        $stop = now()->create($request->period_stop)->format("d.m");
+
+        $request->merge([
+            'name' => "АВАНС {$start}-{$stop}",
+        ]);
+
+        return (new Expenses)->save($request);
     }
 }

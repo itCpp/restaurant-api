@@ -21,9 +21,18 @@ trait Users
                 'employee_work_dates.work_stop'
             )
             ->leftjoin('employee_work_dates', 'employee_work_dates.employee_id', '=', 'employees.id')
-            ->where(function ($query) {
-                $query->where('employee_work_dates.work_start', '<=', request()->stop)
-                    ->orWhere('employee_work_dates.work_start', null);
+            ->when((bool) request()->id, function ($query) {
+                $query->where('employees.id', request()->id);
+            })
+            ->when(!(bool) request()->id, function ($query) {
+                $query->where(function ($query) {
+                    $query->where('employee_work_dates.work_start', '<=', request()->stop)
+                        ->orWhere('employee_work_dates.work_start', null);
+                })
+                    ->where(function ($query) {
+                        $query->where('employee_work_dates.work_stop', '>=', request()->start)
+                            ->orWhere('employee_work_dates.work_stop', null);
+                    });
             })
             ->orderBy('employee_work_dates.work_start')
             ->distinct()
@@ -32,10 +41,13 @@ trait Users
                 $rows[$row->id] = Employees::employee($row);
             });
 
-        foreach ($rows ?? [] as $row)
+        foreach ($rows ?? [] as $row) {
+            $users_id[] = $row->id;
             $users[] = $row;
+        }
 
         $this->data['users'] = $users ?? [];
+        $this->data['data']['ids'] = array_values(array_unique($users_id ?? []));
 
         return $this;
     }

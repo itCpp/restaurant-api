@@ -8,6 +8,7 @@ class Salaries
 {
     use Cashbox,
         Users,
+        Shedules,
         Result;
 
     /**
@@ -25,6 +26,7 @@ class Salaries
     public function __construct()
     {
         $this->getUsers()
+            ->getShedules()
             ->getPrepayments()
             ->getResult();
     }
@@ -37,9 +39,15 @@ class Salaries
      */
     public static function index(Request $request)
     {
+        $start = now()->create($request->month ?: now())->startOfMonth()->format("Y-m-d");
+        $stop = now()->create($request->month ?: now())->endOfMonth()->format("Y-m-d");
+        $days = now()->create($start)->subDay()->diff($stop)->days ?? 0;
+
         $request->merge([
-            'start' => now()->create($request->month ?: now())->startOfMonth()->format("Y-m-d"),
-            'stop' => now()->create($request->month ?: now())->endOfMonth()->format("Y-m-d"),
+            'month' => now()->create($request->month ?: now())->format("Y-m"),
+            'start' => $start,
+            'stop' => $stop,
+            'days' => $days,
         ]);
 
         return response()->json(
