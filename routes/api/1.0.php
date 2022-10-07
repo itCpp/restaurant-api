@@ -142,6 +142,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
             /** Данные */
             Route::post('/', [App\Http\Controllers\Employees\Salaries::class, "index"]);
+
+            /** Сохранение выплаты */
+            Route::post('save', [App\Http\Controllers\Employees\Salaries::class, "save"]);
         });
 
         /** График работы сотрудника */
