@@ -149,6 +149,8 @@ class Expenses extends Controller
         $row->date = $request->date ?: now()->format("Y-m-d");
         $row->month = now()->create($row->date)->format("Y-m");
         $row->user_id = $row->user_id ?: $request->user()->id;
+        $row->period_start = $request->period_start;
+        $row->period_stop = $request->period_stop;
 
         $row->save();
 
