@@ -70,7 +70,7 @@ trait Result
      * @param  \App\Models\Employee  $row
      * @return array
      */
-    public function getSalaryParts(Employee $row)
+    public function getSalaryParts(Employee &$row)
     {
         $days = request()->days ?: 30;
         $part = $row->salary_one_day ? $row->salary : $row->salary / $days;
@@ -121,6 +121,13 @@ trait Result
             if ($stop_day and $stop_day < now()->create(request()->month)->setDay($day))
                 $parts[$day] = 0;
         }
+
+        $row->parts_data = collect($parts ?? [])->map(function ($part, $day) {
+            return [
+                'date' => now()->create(request()->month)->setDay($day)->format("Y-m-d"),
+                'sum' => $part,
+            ];
+        })->values()->all();
 
         return $parts ?? [];
     }
