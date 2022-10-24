@@ -12,6 +12,7 @@ use App\Models\ExpenseType;
 use App\Models\IncomeSource;
 use App\Models\IncomeSourceParking;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class Cashbox extends Controller
 {
@@ -26,6 +27,56 @@ class Cashbox extends Controller
     public function index(Request $request)
     {
         $data = CashboxTransaction::orderBy('date', "DESC")
+            ->when((bool) $request->search, function ($query) use ($request) {
+
+                $search = $request->search;
+
+                $query->when((bool) ($search['name'] ?? null), function ($query) use ($search) {
+
+                    $query->where(function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search['name']}%")
+                            ->orWhere(function ($query) use ($search) {
+
+                                $types = [];
+
+                                ExpenseSubtype::where('expense_type_id', '!=', 1)
+                                    ->where('name', 'like', "%{$search['name']}%")
+                                    ->get()
+                                    ->each(function ($row) use (&$types) {
+                                        $types[$row->expense_type_id][] = $row->id;
+                                    });
+
+                                Employee::where(DB::raw("CONCAT(surname,' ',name,' ',middle_name)"), 'like', "%{$search['name']}%")
+                                    ->get()
+                                    ->each(function ($row) use (&$types) {
+                                        $types[1][] = $row->id;
+                                    });
+
+                                foreach ($types as $type => $subtypes) {
+                                    $query->orWhere(function ($query) use ($type, $subtypes) {
+                                        $query->where('expense_type_id', $type)
+                                            ->whereIn('expense_subtype_id', $subtypes);
+                                    });
+                                }
+                            })
+                            ->orWhere(function ($query) use ($search) {
+
+                                $types = [];
+
+                                IncomeSource::where('name', 'like', "%{$search['name']}%")
+                                    ->get()
+                                    ->each(function ($row) use (&$types) {
+                                        $types[] = $row->id;
+                                    });
+
+                                $query->orWhereIn('income_source_id', $types);
+                            });
+                    });
+                })
+                    ->when((bool) ($search['date'] ?? null), function ($query) use ($search) {
+                        $query->where('date', $search['date']);
+                    });
+            })
             ->orderBy('id', "DESC")
             ->paginate(40);
 
