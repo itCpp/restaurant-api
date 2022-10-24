@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Incomes\Parking;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+Route::any('test', [Parking::class, 'docx']);
 
 Route::middleware('auth:sanctum')->get('/user', [App\Http\Controllers\User::class, "user"]);
 
@@ -175,6 +178,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Список парковочных мест источника */
         Route::post('list', [App\Http\Controllers\Incomes\Parking::class, "list"]);
+
+        /** Формирование документа со списком авто */
+        Route::post('docx', [Parking::class, 'docx']);
     });
 
     /** Маршрутизация кассы */

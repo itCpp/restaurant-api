@@ -10,27 +10,31 @@ use App\Models\IncomeSourceParking;
 use App\Models\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Redis;
 
 class Parking extends Controller
 {
     /**
      * Выводит парковочные данные
      * 
-     * @param  \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request  $request
+     * @param  bool  $toArray
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request, $toArray = false)
     {
         $rows = IncomeSource::where('is_parking', true)
             ->orWhere('part_id', null)
             ->get()
             ->map(function ($row) {
                 return $this->source($row);
-            })
-            ->toArray();
+            });
+
+        if ($toArray)
+            return $rows;
 
         return response()->json([
-            'rows' => $rows,
+            'rows' => $rows->toArray(),
         ]);
     }
 
@@ -347,5 +351,16 @@ class Parking extends Controller
                     ];
                 }),
         );
+    }
+
+    /**
+     * Формирование документа со списком автомобилей
+     * 
+     * @param  \Illuminate\Http\Request  $requerst
+     * @return mixed
+     */
+    public function docx(Request $requerst)
+    {
+        return (new ParkingDocGenerate)->generate($requerst);
     }
 }
