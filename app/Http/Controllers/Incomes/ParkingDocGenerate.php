@@ -45,6 +45,9 @@ class ParkingDocGenerate
                 $text .= " " . $car->car ?? "Не указана";
                 $text .= " (" . ($car->car_number ?? "Номер не указан") . ")";
 
+                if ($car->date_to)
+                    $text .= " до " . now()->create($car->date_to)->format("d.m.Y");
+
                 $section->addText(trim($text), ['name' => 'Tahoma', 'size' => 14]);
             }
 
@@ -54,6 +57,7 @@ class ParkingDocGenerate
         $file = "Список автомобилей " . now()->format("d.m.Y H:i") . ".docx";
 
         header("Content-Description: File Transfer");
+        header("Access-Control-Allow-Origin: *");
         header('Content-Disposition: attachment; filename="' . $file . '"');
         header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
         header('Content-Transfer-Encoding: binary');

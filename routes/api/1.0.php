@@ -14,8 +14,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::any('test', [Parking::class, 'docx']);
-
 Route::middleware('auth:sanctum')->get('/user', [App\Http\Controllers\User::class, "user"]);
 
 /** Маршрутизация сотрудников */
