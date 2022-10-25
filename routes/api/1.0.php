@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Cashbox\Base;
 use App\Http\Controllers\Incomes\Parking;
 use Illuminate\Support\Facades\Route;
 
@@ -195,6 +196,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         /** Данные календаря */
         Route::post('calendar', [App\Http\Controllers\Cashbox\Calendar::class, "index"]);
+    
+        /** Данные из базы */
+        Route::get('base', [Base::class, 'index']);
     });
 
     /** Маршрутизация дополнительных услуг */
