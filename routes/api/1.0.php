@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Cashbox\Base;
+use App\Http\Controllers\Cashbox\Info;
 use App\Http\Controllers\Incomes\Parking;
 use Illuminate\Support\Facades\Route;
 
@@ -199,6 +200,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
         /** Данные из базы */
         Route::get('base', [Base::class, 'index']);
+        Route::get('info', [Info::class, 'index']);
     });
 
     /** Маршрутизация дополнительных услуг */
