@@ -181,6 +181,18 @@ class Sources extends Controller
                 $overdue = true;
         }
 
+        if ($overdue)
+            return $overdue;
+
+        $row->overdue_pays = (new Incomes)->view(request(), $row);
+
+        foreach ($row->overdue_pays as $month_pays) {
+            foreach ($month_pays['rows'] ?? [] as $pay_row) {
+                if (($pay_row['noPay'] ?? null) and ($pay_row['date'] ?? now()->format("Y-m-d")) < now()->format("Y-m-d") and !($pay_row['hide_overdue'] ?? null))
+                    return true;
+            }
+        }
+
         return $overdue;
     }
 

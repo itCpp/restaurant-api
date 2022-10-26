@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Incomes\LegalAddress\LegalAddress;
 use App\Http\Controllers\Incomes\Parking;
 use App\Http\Controllers\Incomes\Pays;
 use App\Http\Controllers\Incomes\Purposes;
@@ -28,6 +29,8 @@ class Incomes extends Controller
     {
         if ($request->id == "parking")
             return (new Parking)->index($request);
+        else if ($request->id == "address")
+            return (new LegalAddress)->index($request);
 
         $rows = IncomePart::whereBuildingId($request->id)
             ->get()
@@ -58,7 +61,7 @@ class Incomes extends Controller
             ->orderBy('cabinet')
             ->get()
             ->map(function ($row) {
-                return $this->getIncomeSourceRow($row);
+                return $row = $this->getIncomeSourceRow($row);
             })
             ->sortBy('cabinet', SORT_NATURAL)
             ->values()
@@ -129,7 +132,7 @@ class Incomes extends Controller
         $row->income_part_id = $request->income_part_id;
         $row->income_source_id = $source->id;
         $row->income_source_parking_id = $request->parking_id;
-        $row->income_source_service_id = $request->service_id; 
+        $row->income_source_service_id = $request->service_id;
         $row->date = $request->date ?: now()->format("Y-m-d");
         $row->month = now()->create($row->date)->format("Y-m");
         $row->period_start = $request->period_start ?: now()->create($row->month)->startOfMonth()->format("Y-m-d");

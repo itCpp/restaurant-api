@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Cashbox\Base;
+use App\Http\Controllers\Cashbox\Info;
 use App\Http\Controllers\Incomes\Parking;
 use Illuminate\Support\Facades\Route;
 
@@ -193,8 +195,17 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Сохранение или создание */
         Route::post('save', [App\Http\Controllers\Cashbox\Save::class, "save"]);
 
+        /** Удалление строки */
+        Route::post('remove', [App\Http\Controllers\Cashbox\Save::class, "remove"]);
+
         /** Данные календаря */
         Route::post('calendar', [App\Http\Controllers\Cashbox\Calendar::class, "index"]);
+    
+        /** Данные из базы */
+        Route::get('base', [Base::class, 'index']);
+
+        /** Данные из кассы */
+        Route::get('info', [Info::class, 'index']);
     });
 
     /** Маршрутизация дополнительных услуг */

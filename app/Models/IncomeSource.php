@@ -67,4 +67,14 @@ class IncomeSource extends Model
             )
             ->wherePivot('deleted_at', null);
     }
+
+    /**
+     * Получить телефон, связанный с пользователем.
+     * 
+     * @param \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function part()
+    {
+        return $this->hasOne(IncomePart::class, 'id', 'part_id');
+    }
 }

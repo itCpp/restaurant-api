@@ -148,4 +148,22 @@ class Save extends Controller
     {
         return (new Types)->createSubType($id, $name);
     }
+
+    /**
+     * Удаляет или восстанавливает строку
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function remove(Request $request)
+    {
+        if (!$row = CashboxTransaction::withTrashed()->find($request->id))
+            return response()->json(['message' => "Строка не найдена"], 401);
+
+        $row->deleted_at ? $row->restore() : $row->delete();
+
+        return response()->json([
+            'row' => $row,
+        ]);
+    }
 }
