@@ -191,6 +191,9 @@ class Parking extends Controller
         if ($day > 20 and !in_array($next_month, $this->all_months))
             return $this->getNextPayModel($row, now()->diffInMonths(now()->create($next_month)) + 1);
 
+        if ($day > 20 and $next_month == now()->addMonth()->format("Y-m"))
+            return $this->getNextPayModel($row, 1);
+
         if ($day > 20 and in_array($next_month, $this->all_months))
             return $this->getNextPayModel($row, 2);
 
