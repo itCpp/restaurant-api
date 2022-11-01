@@ -49,7 +49,7 @@ class ParkingDocGenerate
                     $text .= " до " . now()->create($car->date_to)->format("d.m.Y");
 
                 if ($car->comment)
-                    $text .= " ($row->comment)";
+                    $text .= " ($car->comment)";
 
                 $section->addText(trim($text), ['name' => 'Tahoma', 'size' => 12]);
             }
