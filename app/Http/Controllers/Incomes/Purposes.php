@@ -49,6 +49,12 @@ class Purposes extends Controller
             'every_month' => true,
             'icon' => "add to cart"
         ],
+        [
+            'id' => 7,
+            'name' => "КРАТКОВРЕМЕННАЯ АРЕНДА",
+            'every_month' => false,
+            'icon' => "building outline"
+        ],
     ];
 
     /**
