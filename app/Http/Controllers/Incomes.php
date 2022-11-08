@@ -58,6 +58,35 @@ class Incomes extends Controller
             ->when($is_parking, function ($query) {
                 $query->where('is_parking', true);
             })
+            ->when((bool) request()->onlyFree, function ($query) {
+                $query->where(function ($query) {
+                    $query->whereIsFree(true)
+                        ->orWhere(function ($query) {
+                            $query->where([
+                                ['date', null],
+                                ['date_to', null],
+                            ]);
+                        })
+                        ->orWhere('date_to', '<', now()->format("Y-m-d"))
+                        ->orWhere('date', '>', now()->format("Y-m-d"));
+                });
+            })
+            ->when((bool) request()->onlyRent, function ($query) {
+                $query->where(function ($query) {
+                    $query->where(function ($query) {
+                        $query->where('date_to', '>=', now()->format("Y-m-d"))
+                            ->where('date', '<=', now()->format("Y-m-d"));
+                    })
+                        ->orWhere(function ($query) {
+                            $query->where('date_to', null)
+                                ->where('date', '<=', now()->format("Y-m-d"));
+                        })
+                        ->orWhere(function ($query) {
+                            $query->where('date_to', '>=', now()->format("Y-m-d"))
+                                ->where('date', null);
+                        });
+                });
+            })
             ->orderBy('cabinet')
             ->get()
             ->map(function ($row) {
