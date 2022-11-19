@@ -22,7 +22,7 @@ class Tenants extends Controller
      */
     public function get(Request $request)
     {
-        if (!$row = IncomeSource::find($request->id))
+        if (!$row = IncomeSource::withTrashed()->find($request->id))
             return response()->json(['message' => "Данные по арендатору не найдены"], 400);
 
         $request->merge([
