@@ -323,7 +323,9 @@ class Parking extends Controller
         $pay->income_source_parking_id = $row->id;
         $pay->income_source_parking_id = $row->id;
         $pay->date = $request->date;
-        $pay->month = now()->create($request->date)->format("Y-m");
+        $pay->month = $request->month ?: now()->create($request->date)->format("Y-m");
+        $pay->period_start = now()->create($pay->month)->startOfMonth()->format("Y-m-d");
+        $pay->period_stop = now()->create($pay->month)->endOfMonth()->format("Y-m-d");
         $pay->user_id = $request->user()->id;
 
         $pay->save();
