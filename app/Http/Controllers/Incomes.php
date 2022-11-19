@@ -42,6 +42,7 @@ class Incomes extends Controller
 
         return response()->json([
             'rows' => $rows,
+            $this->isBoolean(request()->onlyArchive),
         ]);
     }
 
@@ -55,10 +56,13 @@ class Incomes extends Controller
     public function getSourcesPart($id, $is_parking = false)
     {
         return IncomeSource::wherePartId($id)
+            ->when((bool) $this->isBoolean(request()->onlyArchive), function ($query) {
+                $query->onlyTrashed();
+            })
             ->when($is_parking, function ($query) {
                 $query->where('is_parking', true);
             })
-            ->when((bool) request()->onlyFree, function ($query) {
+            ->when((bool) $this->isBoolean(request()->onlyFree), function ($query) {
                 $query->where(function ($query) {
                     $query->whereIsFree(true)
                         ->orWhere(function ($query) {
@@ -71,7 +75,7 @@ class Incomes extends Controller
                         ->orWhere('date', '>', now()->format("Y-m-d"));
                 });
             })
-            ->when((bool) request()->onlyRent, function ($query) {
+            ->when((bool) $this->isBoolean(request()->onlyRent), function ($query) {
                 $query->where(function ($query) {
                     $query->where(function ($query) {
                         $query->where('date_to', '>=', now()->format("Y-m-d"))
