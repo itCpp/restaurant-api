@@ -46,7 +46,8 @@ class Cashbox extends Controller
                                         $types[$row->expense_type_id][] = $row->id;
                                     });
 
-                                Employee::where(DB::raw("CONCAT(surname,' ',name,' ',middle_name)"), 'like', "%{$search['name']}%")
+                                Employee::withTrashed()
+                                    ->where(DB::raw("CONCAT(surname,' ',name,' ',middle_name)"), 'like', "%{$search['name']}%")
                                     ->get()
                                     ->each(function ($row) use (&$types) {
                                         $types[1][] = $row->id;
@@ -63,7 +64,8 @@ class Cashbox extends Controller
 
                                 $types = [];
 
-                                IncomeSource::where('name', 'like', "%{$search['name']}%")
+                                IncomeSource::withTrashed()
+                                    ->where('name', 'like', "%{$search['name']}%")
                                     ->get()
                                     ->each(function ($row) use (&$types) {
                                         $types[] = $row->id;
