@@ -54,8 +54,10 @@ class Salaries extends Controller
         $salary->salary = (float) $request->salary;
         $salary->is_one_day = (bool) $request->is_one_day;
 
-        if (!$find)
+        if (!$find) {
             $salary->salary_prev = $row->salary ?? 0;
+            $salary->is_one_day_prev = (bool) ($row->salary_one_day ?? null);
+        }
 
         $salary->save();
 
