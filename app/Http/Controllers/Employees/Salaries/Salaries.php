@@ -94,6 +94,18 @@ class Salaries
     }
 
     /**
+     * Пересчет остатков
+     * 
+     * @param  int  $user_id
+     * @param  string  $date
+     * @return null
+     */
+    public static function recountDutyUser($user_id, $date)
+    {
+        
+    }
+
+    /**
      * Обработка несуществующего метода
      * 
      * @param mixed $name
