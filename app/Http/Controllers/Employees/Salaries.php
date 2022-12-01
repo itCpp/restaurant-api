@@ -74,6 +74,30 @@ class Salaries extends Controller
     }
 
     /**
+     * Типы оплат
+     * 
+     * @return array
+     */
+    public function getPurposePays()
+    {
+        return [
+            1 => "АВАНС",
+            2 => "ЗП",
+            3 => "ПРЕМИЯ",
+        ];
+    }
+
+    /**
+     * Типы расчетов зарплаты
+     * 
+     * @return array
+     */
+    public static function salaryCountPaysIds()
+    {
+        return [1, 2];
+    }
+
+    /**
      * Выдача получки
      * 
      * @param  \Illuminate\Http\Request $request
@@ -84,8 +108,10 @@ class Salaries extends Controller
         $start = now()->create($request->period_start)->format("d");
         $stop = now()->create($request->period_stop)->format("d.m");
 
+        $purpose = $this->getPurposePays()[$request->purpose_pay] ?? "АВАНС";
+
         $request->merge([
-            'name' => "АВАНС {$start}-{$stop}",
+            'name' => "{$purpose} {$start}-{$stop}",
         ]);
 
         return (new Expenses)->save($request);

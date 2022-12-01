@@ -68,6 +68,9 @@ trait Result
         /** Выплаченные довольствия за период */
         $row->prepayment = $this->data['data']['prepayments'][$row->id] ?? 0;
 
+        /** Выданные премии */
+        $row->premium = $this->data['data']['premiums'][$row->id] ?? 0;
+
         /** Долги за предыдущие периоды */
         $row->duty = round($this->data['data']['duties'][$row->id] ?? 0, 2);
 
