@@ -78,12 +78,26 @@ class Salaries extends Controller
      * 
      * @return array
      */
-    public function getPurposePays()
+    public static function getPurposePays()
     {
         return [
             1 => "АВАНС",
             2 => "ЗП",
             3 => "ПРЕМИЯ",
+        ];
+    }
+
+    /**
+     * Типы оплат
+     * 
+     * @return array
+     */
+    public static function getPurposeSalariesOptions()
+    {
+        return [
+            ['key' => 0, 'text' => "Аванс", 'value' => 1, 'name' => "АВАНС"],
+            ['key' => 1, 'text' => "Зарплата", 'value' => 2, 'name' => "ЗП"],
+            ['key' => 2, 'text' => "Премия", 'value' => 3, 'name' => "ПРЕМИЯ"],
         ];
     }
 

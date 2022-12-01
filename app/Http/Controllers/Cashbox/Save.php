@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cashbox;
 use App\Http\Controllers\Cashbox;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Expenses\Types;
+use App\Models\AdditionalService;
 use App\Models\CashboxTransaction;
 use App\Models\IncomeSource;
 use App\Models\Log;
@@ -28,9 +29,12 @@ class Save extends Controller
             'sum' => "required|numeric",
             'date' => "required",
             'purpose_pay' => "required_with:income_source_id",
-            'income_source_parking_id' => "required_if:purpose_pay,2",
             'expense_type_id' => "required_if:is_expense,true",
         ];
+
+        if ($request->is_income) {
+            $rules['income_source_parking_id'] = "required_if:purpose_pay,2";
+        }
 
         if ($request->income_type_pay == "tenant") {
             $rules['income_source_id'] = "required_if:is_income,true";
@@ -91,8 +95,23 @@ class Save extends Controller
         $row->income_source_parking_id = $request->income_source_parking_id;
         $row->income_type_pay = $request->income_type_pay;
 
-        if ($source = IncomeSource::find($row->income_source_id))
+        if ($source = IncomeSource::find($row->income_source_id)) {
             $row->income_part_id = $source->part_id;
+            $row->name = $source->name;
+        }
+
+        if (is_string($request->income_source_service_id)) {
+
+            $additional_service = AdditionalService::create([
+                'name' => $request->income_source_service_id,
+                'is_one' => true,
+            ]);
+
+            $request->income_source_service_id = $additional_service->id;
+        }
+
+        $row->income_source_service_id = $request->income_source_service_id;
+        $row->comment = $request->comment;
 
         /** Обнуление данных расхода */
         $row->is_expense = false;
@@ -129,7 +148,7 @@ class Save extends Controller
 
         /** Обнуление прихода */
         $row->is_income = false;
-        $row->purpose_pay = null;
+        $row->purpose_pay = $row->expense_type_id == 1 ? $request->purpose_pay : null;
         $row->income_source_id = null;
         $row->income_source_parking_id = null;
         $row->income_type_pay = null;
