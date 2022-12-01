@@ -98,6 +98,8 @@ class Save extends Controller
         if ($source = IncomeSource::find($row->income_source_id)) {
             $row->income_part_id = $source->part_id;
             $row->name = $source->name;
+        } else {
+            $row->name = null;
         }
 
         if (is_string($request->income_source_service_id)) {
@@ -115,7 +117,6 @@ class Save extends Controller
 
         /** Обнуление данных расхода */
         $row->is_expense = false;
-        $row->name = null;
         $row->expense_type_id = null;
         $row->expense_subtype_id = null;
 
