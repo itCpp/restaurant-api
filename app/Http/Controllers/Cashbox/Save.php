@@ -28,7 +28,6 @@ class Save extends Controller
             'is_expense' => Rule::requiredIf(!$request->is_income),
             'sum' => "required|numeric",
             'date' => "required",
-            'purpose_pay' => "required_with:income_source_id",
             'expense_type_id' => "required_if:is_expense,true",
         ];
 
@@ -38,6 +37,10 @@ class Save extends Controller
 
         if ($request->income_type_pay == "tenant") {
             $rules['income_source_id'] = "required_if:is_income,true";
+        }
+
+        if ($request->income_type_pay != "parking_one") {
+            $rules['purpose_pay'] = "required_with:income_source_id";
         }
 
         $request->validate($rules);
