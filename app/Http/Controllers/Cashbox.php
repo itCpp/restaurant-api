@@ -80,6 +80,12 @@ class Cashbox extends Controller
                 })
                     ->when((bool) ($search['date'] ?? null), function ($query) use ($search) {
                         $query->where('date', $search['date']);
+                    })
+                    ->when((bool) ($search['sum'] ?? null), function ($query) use ($search) {
+                        $query->where(function ($query) use ($search) {
+                            $query->where('sum', $search['sum'])
+                                ->orWhere('sum', $search['sum'] * (-1));
+                        });
                     });
             })
             ->orderBy('id', "DESC")
