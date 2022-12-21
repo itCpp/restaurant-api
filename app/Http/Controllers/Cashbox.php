@@ -211,7 +211,7 @@ class Cashbox extends Controller
         if (isset($this->get_source[$id]))
             return $this->get_source[$id];
 
-        return $this->get_source[$id] = IncomeSource::find($id);
+        return $this->get_source[$id] = IncomeSource::withTrashed()->find($id);
     }
 
     /**
