@@ -7,6 +7,29 @@ use App\Models\Employee;
 
 trait Result
 {
+    public function sheduleTypeCounts($type)
+    {
+        return match ($type) {
+            1 => [1, 1],
+            2 => [2, 2],
+            3 => [3, 3],
+            4 => [5, 2],
+            5 => [6, 1],
+            6 => [7, 0],
+            default => [7, 0],
+        };
+    }
+
+    public function sheduleTypeStart($type)
+    {
+        return match ($type) {
+            4 => 1,
+            5 => 1,
+            6 => 1,
+            default => null,
+        };
+    }
+
     /**
      * Подсчитывает результаты
      * 
@@ -250,10 +273,8 @@ trait Result
      */
     public function getWorkingDaysFromShedule(Employee $row)
     {
-        $shedule = SheduleTypes::tryFrom($row->personal_data_work_shedule ?? 6);
-
-        $counts = $shedule->counts();
-        $start = $shedule->start();
+        $counts = $this->sheduleTypeCounts($row->personal_data_work_shedule ?? 6);
+        $start = $this->sheduleTypeStart($row->personal_data_work_shedule ?? 6);
 
         $work_days = $counts[0] ?? 7;
         $day_off_days = $counts[1] ?? 0;
