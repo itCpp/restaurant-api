@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Employees\Salaries\Traits;
 
+use App\Http\Controllers\Employees\Salaries\Enums\SheduleTypes;
 use App\Models\Employee;
 
 trait Result
@@ -62,6 +63,7 @@ trait Result
     {
         /** График работы */
         $row->shedule = $this->data['data']['shedule'][$row->id] ?? [];
+        $row->shedule_works = $this->getWorkingDaysFromShedule($row);
 
         $row->parts = $this->getSalaryParts($row);
 
@@ -86,6 +88,7 @@ trait Result
     public function getSalaryPartAllDays(&$row)
     {
         $days = request()->days ?: 30;
+        $days = count($row->shedule_works ?? []) ?: $days;
 
         $salary = $this->data['data']['salary_first'][$row->id]['salary'] ?? 0;
         $is_one_day = $this->data['data']['salary_first'][$row->id]['is_one_day'] ?? false;
@@ -139,7 +142,11 @@ trait Result
     {
         $days = request()->days ?: 30;
         $date = now()->create(request()->start);
-        $part = $row->salary_one_day ? $row->salary : $row->salary / $days;
+
+        $days_count = count($row->shedule_works ?? []) ?: $days;
+        $is_shedule_works = is_array($row->shedule_works) and (bool) count($row->shedule_works ?? []);
+
+        $part = $row->salary_one_day ? $row->salary : $row->salary / $days_count;
 
         $this->getSalaryPartAllDays($row);
 
@@ -154,6 +161,10 @@ trait Result
             $salary_part = isset($row->parts_salaries[$key])
                 ? $row->parts_salaries[$key]
                 : ($is_one_day ? 0 : $part);
+
+            if (!$is_one_day and $is_shedule_works) {
+                $salary_part = in_array($key, $row->shedule_works) ? $salary_part : 0;
+            }
 
             $parts[$i] = $is_one_day ? 0 : $salary_part;
             $parts_one_day[$i] = $is_one_day;
@@ -190,8 +201,6 @@ trait Result
                 $parts[$day] = 0;
             }
         }
-
-        $row->ss = $ss ?? null;
 
         $start_day = $row->work_start ? now()->create($row->work_start) : null;
         $stop_day = $row->work_stop ? now()->create($row->work_stop) : null;
@@ -231,5 +240,48 @@ trait Result
         }
 
         return round($toPayoff, 2);
+    }
+
+    /**
+     * Определяет количество рабочих дней по графику работы
+     * 
+     * @param  \App\Models\Employee  $row
+     * @return array
+     */
+    public function getWorkingDaysFromShedule(Employee $row)
+    {
+        $shedule = SheduleTypes::tryFrom($row->personal_data_work_shedule ?? 6);
+
+        $counts = $shedule->counts();
+        $start = $shedule->start();
+
+        $work_days = $counts[0] ?? 7;
+        $day_off_days = $counts[1] ?? 0;
+        $days_count = 1;
+
+        $start = now()->create(request()->start);
+
+        while ($start <= now()->create(request()->stop)) {
+
+            $day = (int) $start->copy()->format("N");
+
+            if ($work_days >= 5) {
+                $days_count = $day;
+            }
+
+            if ($work_days >= $days_count) {
+                $days[] = $start->copy()->format("Y-m-d");
+            }
+
+            $start->addDay();
+
+            if ($days_count == ($work_days + $day_off_days)) {
+                $days_count = 0;
+            }
+
+            $days_count++;
+        }
+
+        return $days ?? [];
     }
 }

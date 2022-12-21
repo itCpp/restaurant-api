@@ -6,6 +6,7 @@ use App\Http\Controllers\Employees\JobTitles;
 use App\Http\Controllers\Employees\Shedules;
 use App\Models\Employee;
 use App\Models\EmployeeSalary;
+use App\Models\EmployeeSheduleStory;
 use App\Models\EmployeeWorkDate;
 use App\Models\Log;
 use Illuminate\Http\Request;
@@ -133,6 +134,8 @@ class Employees extends Controller
         if (!$row = Employee::find($request->id))
             return response()->json(['message' => "Данные сотрудника не найдены"], 400);
 
+        $shedule_before = $row->personal_data['work_shedule'] ?? null;
+
         $personal_data = [];
 
         foreach ($request->all() as $key => $value) {
@@ -154,6 +157,8 @@ class Employees extends Controller
 
         $row->save();
 
+        $shedule_after = $row->personal_data['work_shedule'] ?? null;
+
         Log::write($row, $request);
 
         EmployeeWorkDate::checkAndChangeWorkDate(
@@ -161,6 +166,15 @@ class Employees extends Controller
             $request->date_work_start,
             $request->date_work_stop
         );
+
+        if ($shedule_before != $shedule_after) {
+            EmployeeSheduleStory::create([
+                'employee_id' => $row->id,
+                'shedule_type' => $shedule_after,
+                'shedule_start' => now()->format("Y-m-d"),
+                'user_id' => optional($request->user())->id,
+            ]);
+        }
 
         return response()->json(
             $this->employee($row),
