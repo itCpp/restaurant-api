@@ -219,6 +219,10 @@ trait Result
             else if ($data['type'] == 5) {
                 $parts[$day] = $part * 2;
             }
+            /** Устранение побочного эффекта */
+            else if ($data['type'] === null and !$is_one_day) {
+                $parts[$day] = $part;
+            }
             /** По графику */
             else if (!$is_one_day) {
                 $parts[$day] = 0;
