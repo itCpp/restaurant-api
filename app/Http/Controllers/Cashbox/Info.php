@@ -37,14 +37,14 @@ class Info extends Controller
 
                 $data[$key]['sum'] += $row->sum;
 
-                if ($key == 3)
-                    $data[$key]['sum'] += 185069.88;
+                // if ($key == 3)
+                //     $data[$key]['sum'] += 185069.88;
             });
 
         CashboxTransaction::selectRaw('sum(sum) sum, IFNULL(type_pay, 1) type_pay')
             ->where(function ($query) {
                 $query->where('type_pay', '!=', null)
-                    ->orWhereNotIn('type_pay', [1, 4]);
+                    ->whereNotIn('type_pay', [1, 4]);
             })
             ->where('date', '>=', "2023-01-01")
             ->groupBy('type_pay')
@@ -72,6 +72,7 @@ class Info extends Controller
                     $row['sum'] = round($row['sum'], 2);
                     return $row;
                 })
+                ->sortBy('type_pay')
                 ->values()
                 ->all()
         ]);
