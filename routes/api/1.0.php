@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/user', [App\Http\Controllers\User::class, "user"]);
 
+Route::get('menu', [App\Http\Controllers\MainMenuController::class, "index"]);
+
 /** Маршрутизация сотрудников */
 Route::group(['prefix' => "user"], function () {
 
