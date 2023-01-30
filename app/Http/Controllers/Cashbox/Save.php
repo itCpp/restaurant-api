@@ -123,10 +123,38 @@ class Save extends Controller
         $row->expense_type_id = null;
         $row->expense_subtype_id = null;
 
-        if ($row->income_type_pay == "parking_one") {
+        if (in_array($row->income_type_pay, ["parking_one", "income_cash", "income_non_cash", "income_other"])) {
+
             $row->period_start = null;
             $row->period_stop = null;
-            $row->name = "Гостевая парковка";
+
+            if (!$request->name) {
+
+                switch ($row->income_type_pay) {
+
+                    case 'parking_one':
+                        $row->name = "Гостевая парковка";
+                        break;
+
+                    case 'income_cash':
+                        $row->name = "Приход наличные";
+                        break;
+
+                    case 'income_non_cash':
+                        $row->name = "Приход безналичные";
+                        break;
+
+                    case 'income_other':
+                        $row->name = "Приход прочее";
+                        break;
+
+                    default:
+                        $row->name = $row->income_type_pay;
+                        break;
+                }
+            } else {
+                $row->name = $request->name;
+            }
         }
 
         return $row;
