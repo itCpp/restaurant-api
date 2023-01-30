@@ -17,11 +17,6 @@ class Info extends Controller
     public function index(Request $request)
     {
         CashboxTransaction::selectRaw('sum(sum) sum, IFNULL(type_pay, 1) type_pay')
-            ->where(function ($query) {
-                $query->where('type_pay', null)
-                    ->orWhereIn('type_pay', [1, 4]);
-            })
-            ->where('date', '>=', "2022-10-01")
             ->groupBy('type_pay')
             ->get()
             ->each(function ($row) use (&$data) {
@@ -36,34 +31,6 @@ class Info extends Controller
                 }
 
                 $data[$key]['sum'] += $row->sum;
-
-                // if ($key == 3)
-                //     $data[$key]['sum'] += 185069.88;
-            });
-
-        CashboxTransaction::selectRaw('sum(sum) sum, IFNULL(type_pay, 1) type_pay')
-            ->where(function ($query) {
-                $query->where('type_pay', '!=', null)
-                    ->whereNotIn('type_pay', [1, 4]);
-            })
-            ->where('date', '>=', "2023-01-01")
-            ->groupBy('type_pay')
-            ->get()
-            ->each(function ($row) use (&$data) {
-
-                $key = (int) $row->type_pay;
-
-                if (!isset($data[$key])) {
-                    $data[$key] = [
-                        'sum' => 0,
-                        'type_pay' => $key,
-                    ];
-                }
-
-                $data[$key]['sum'] += $row->sum;
-
-                if ($key == 3)
-                    $data[$key]['sum'] += 93260.16;
             });
 
         return response()->json([
