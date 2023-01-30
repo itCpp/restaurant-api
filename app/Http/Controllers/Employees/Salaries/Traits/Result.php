@@ -219,13 +219,13 @@ trait Result
             else if ($data['type'] == 5) {
                 $parts[$day] = $part * 2;
             }
+            /** По графику */
+            else if (!$is_one_day or (!$is_one_day and $data['type'] === null)) {
+                $parts[$day] = 0;
+            }
             /** Устранение побочного эффекта */
             else if ($data['type'] === null and !$is_one_day) {
                 $parts[$day] = $part;
-            }
-            /** По графику */
-            else if (!$is_one_day) {
-                $parts[$day] = 0;
             }
         }
 

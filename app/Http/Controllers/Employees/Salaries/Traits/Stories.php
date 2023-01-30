@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Employees\Salaries\Traits;
 
+use App\Models\EmployeeProcessing;
 use App\Models\EmployeeSalary;
 
 trait Stories
@@ -36,6 +37,16 @@ trait Stories
             ->orderBy('start_date')
             ->each(function ($row) {
                 $this->data['data']['salary'][$row->employee_id][$row->start_date] = $row->toArray();
+            });
+
+        EmployeeProcessing::query()
+            ->when(is_array($this->data['data']['ids'] ?? null), function ($query) {
+                $query->whereIn('employee_id', $this->data['data']['ids']);
+            })
+            ->orderBy('id')
+            ->each(function ($row) {
+                $start_date = $row->start_date ?? $row->created_at->format("Y-m-d");
+                $this->data['data']['processing'][$row->employee_id][$start_date] = $row->to ?? 0;
             });
 
         return $this;
