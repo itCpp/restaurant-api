@@ -33,12 +33,12 @@ class Shedules extends Controller
     protected $options = [
         ['value' => null, 'text' => "Г", 'comment' => "По графику"],
         ['value' => 1, 'text' => "Р", 'comment' => "Рабочий день", 'color' => "green"],
-        ['value' => 6, 'text' => "Р+ПЧ", 'comment' => "Рабочий день + П/Ч", 'color' => "olive"],
         ['value' => 2, 'text' => "Р/2", 'comment' => "Неполный рабочий день", 'color' => "blue"],
-        ['value' => 7, 'text' => "Р/2+ПЧ", 'comment' => "Неполный рабочий день + П/Ч", 'color' => "violet"],
         ['value' => 3, 'text' => "В", 'comment' => "Выходной", 'color' => "red"],
         ['value' => 4, 'text' => "В/2", 'comment' => "Неполный выходной", 'color' => "orange"],
         ['value' => 5, 'text' => "П", 'comment' => "Переработка", 'color' => "black"],
+        // ['value' => 6, 'text' => "Р+ПЧ", 'comment' => "Рабочий день + П/Ч", 'color' => "olive"],
+        // ['value' => 7, 'text' => "Р/2+ПЧ", 'comment' => "Неполный рабочий день + П/Ч", 'color' => "violet"],
     ];
 
     /**
@@ -81,16 +81,19 @@ class Shedules extends Controller
         if (!$row = Employee::find($request->id))
             return response()->json(['message' => "Данные сотрудника не найдены"], 400);
 
+        $month = now()->create($request->month ?: now());
+
         $row = Employees::employee($row);
 
         $shedule = EmployeeShedule::whereEmployeeId($request->id)
-            ->where('month', $request->month ?: now()->format("Y-m"))
+            ->where('month', $month->copy()->format("Y-m"))
             ->first();
 
         return response()->json([
             'employee' => $row,
             'shedule' => $shedule,
             'options' => $this->options,
+            'processings' => $row->getMonthProcessings($month),
         ]);
     }
 

@@ -142,6 +142,9 @@ Route::middleware('auth:sanctum')->group(function () {
         /** Применение нового оклада */
         Route::post('salary/set', [App\Http\Controllers\Employees\Salaries::class, "set"]);
 
+        Route::get('salary/{employee}/processing', [App\Http\Controllers\Employees\Salaries::class, "getProcessing"]);
+        Route::post('salary/{employee}/processing', [App\Http\Controllers\Employees\Salaries::class, "storeProcessing"]);
+
         /** Расчет получки */
         Route::group(['prefix' => "salary"], function () {
 

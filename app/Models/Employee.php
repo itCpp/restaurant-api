@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Http\Controllers\Employees\Shedules;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -78,5 +79,31 @@ class Employee extends Model
         $time = trim($time);
 
         return (bool) $time ? $time : null;
+    }
+
+    /**
+     * Переработки, назначенные сотруднику
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function processings()
+    {
+        return $this->hasMany(EmployeeSalariesProcessing::class)->orderBy('date');
+    }
+
+    /**
+     * Выводит ночные переработки за месяц
+     * 
+     * @param  \Carbon\Carbon  $month
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getMonthProcessings(Carbon $month)
+    {
+        return $this->processings()
+            ->whereBetween('date', [
+                $month->copy()->startOfMonth(),
+                $month->copy()->endOfMonth()
+            ])
+            ->get();
     }
 }

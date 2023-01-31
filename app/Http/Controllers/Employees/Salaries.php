@@ -7,6 +7,7 @@ use App\Http\Controllers\Employees;
 use App\Http\Controllers\Employees\Salaries\Salaries as SalariesSalaries;
 use App\Http\Controllers\Expenses;
 use App\Models\Employee;
+use App\Models\EmployeeSalariesProcessing;
 use App\Models\EmployeeSalary;
 use App\Models\Log;
 use Illuminate\Http\Request;
@@ -129,5 +130,65 @@ class Salaries extends Controller
         ]);
 
         return (new Expenses)->save($request);
+    }
+
+    /**
+     * Вывод текущих перератботок
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Employee  $employee
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProcessing(Request $request, Employee $employee)
+    {
+        $month = now()->create($request->month ?: now());
+
+        return response()->json([
+            'processings' => $employee->getMonthProcessings($month)
+        ]);
+    }
+
+    /**
+     * Сохраняет данные переработки
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Employee  $employee
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function storeProcessing(Request $request, Employee $employee)
+    {
+        $data = $request->validate([
+            'processings.*.id' => ["nullable", "exists:App\Models\EmployeeSalariesProcessing,id"],
+            'processings.*.date' => ["required", "date:Y-m-d"],
+            'processings.*.hour' => ["required", "numeric"],
+            'deleted' => ["nullable"],
+        ], [
+            'processings.*.date.required' => "Необходимо указать дату",
+            'processings.*.date.date' => "Дата указана в неверном формате",
+            'processings.*.date.hour' => "Необходимо указать количество часов переработки",
+            'processings.*.date.numeric' => "Количество часов должно быть числом",
+        ]);
+
+        foreach ($data['processings'] ?? [] as $processing) {
+
+            $processing['user_id'] = optional($request->user())->id;
+            $processing['employee_id'] = $employee->id;
+            $processing['processing'] = ($employee->personal_data['processing_hour'] ?? 0) * ($processing['hour'] ?? 0);
+
+            $row = EmployeeSalariesProcessing::firstOrNew(['id' => $processing['id'] ?? null]);
+            $row->fill($processing)->save();
+        }
+
+        if (is_array($data['deleted'] ?? null)) {
+            foreach ($data['deleted'] as $id) {
+                if ($row = EmployeeSalariesProcessing::find($id)) {
+                    $row->delete();
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => "Данные переработки обновлены",
+        ]);
     }
 }

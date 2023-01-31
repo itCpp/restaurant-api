@@ -61,6 +61,8 @@ trait Result
     {
         $this->addedOtherData($row);
 
+        $row->processings = $this->getAllProcessings($row);
+
         /** К выплате */
         $row->toPayoff = $this->getToPayoff($row);
 
@@ -260,7 +262,7 @@ trait Result
      */
     public function getToPayoff(Employee $row)
     {
-        $toPayoff = 0;
+        $toPayoff = ($row->processings ?? 0);
 
         foreach ($row->parts ?? [] as $part) {
             $toPayoff += $part;
@@ -308,5 +310,26 @@ trait Result
         }
 
         return $days ?? [];
+    }
+
+    /**
+     * Подсчитывает переработку сотрудника
+     * 
+     * @param  \App\Models\Employee  $row
+     * @return int
+     */
+    public function getAllProcessings(&$row)
+    {
+        $row->processings_date = $this->data['data']['processings'][$row->id] ?? [];
+
+        $processings = 0;
+
+        if (is_array($row->processings_date)) {
+            foreach ($row->processings_date as $processing) {
+                $processings += $processing;
+            }
+        }
+
+        return $processings;
     }
 }
