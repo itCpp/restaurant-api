@@ -17,12 +17,16 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
 
-        $schedule->command('pays:overdue')
-            ->dailyAt("01:00")
-            ->runInBackground();
+        // $schedule->command('pays:overdue')
+        //     ->dailyAt("01:00")
+        //     ->runInBackground();
 
-        $schedule->command('pays:fine')
-            ->dailyAt("23:59")
+        // $schedule->command('pays:fine')
+        //     ->dailyAt("23:59")
+        //     ->runInBackground();
+
+        $schedule->command('employee:duty')
+            ->lastDayOfMonth("23:59")
             ->runInBackground();
     }
 

@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\CashboxTransaction;
 use App\Models\Employee;
+use App\Observers\CashboxTransactionsObserver;
 use App\Observers\EmployeesObserve;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -28,6 +30,7 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $observers = [
+        CashboxTransaction::class => [CashboxTransactionsObserver::class],
         Employee::class => [EmployeesObserve::class],
     ];
 
