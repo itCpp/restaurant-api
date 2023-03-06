@@ -192,14 +192,23 @@ trait Result
             }
 
             $parts[$i] = $is_one_day ? 0 : $salary_part;
+            $parts_to_one_day[$i] = $is_one_day ? $salary_part : 0;
             $parts_one_day[$i] = $is_one_day;
         }
 
         foreach ($row->shedule ?? [] as $day => $data) {
 
             $day = (int) $day;
-            $is_one_day = $parts_one_day[$i] ?? $row->salary_one_day;
-            $part = $parts[$i] ?? $part;
+            $date = now()->create(request()->month)->setDay($day)->format("Y-m-d");
+            $day_key = $day;
+
+            $is_one_day = $parts_one_day[$day_key] ?? $row->salary_one_day;
+
+            $part = $is_one_day
+                ? $parts_to_one_day[$day_key] ?? $part
+                : $parts[$day_key] ?? $part;
+
+            $part = $part > 0 ? $part : ($row->parts_salaries[$date] ?? 0);
 
             /** Рабочий день */
             if ($data['type'] == 1) {
@@ -244,12 +253,15 @@ trait Result
                 $parts[$day] = 0;
         }
 
-        $row->parts_data = collect($parts ?? [])->map(function ($part, $day) {
-            return [
-                'date' => now()->create(request()->month)->setDay($day)->format("Y-m-d"),
-                'sum' => $part,
-            ];
-        })->values()->all();
+        $row->parts_data = collect($parts ?? [])
+            ->map(function ($part, $day) {
+                return [
+                    'date' => now()->create(request()->month)->setDay($day)->format("Y-m-d"),
+                    'sum' => $part,
+                ];
+            })
+            ->values()
+            ->all();
 
         return $parts ?? [];
     }
