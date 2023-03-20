@@ -85,6 +85,7 @@ class Salaries extends Controller
             1 => "АВАНС",
             2 => "ЗП",
             3 => "ПРЕМИЯ",
+            4 => "НДФЛ",
         ];
     }
 
@@ -99,6 +100,7 @@ class Salaries extends Controller
             ['key' => 0, 'text' => "Аванс", 'value' => 1, 'name' => "АВАНС"],
             ['key' => 1, 'text' => "Зарплата", 'value' => 2, 'name' => "ЗП"],
             ['key' => 2, 'text' => "Премия", 'value' => 3, 'name' => "ПРЕМИЯ"],
+            ['key' => 3, 'text' => "НДФЛ", 'value' => 4, 'name' => "НДФЛ"],
         ];
     }
 
