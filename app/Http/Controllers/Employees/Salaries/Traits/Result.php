@@ -66,6 +66,10 @@ trait Result
         /** К выплате */
         $row->toPayoff = $this->getToPayoff($row);
 
+        if ($row->id == 15 and request()->month == "2023-02") {
+            $row->toPayoff += 2500;
+        }
+
         /** Остаток получки */
         $row->balance = round($row->toPayoff - $row->prepayment + $row->duty);
 
