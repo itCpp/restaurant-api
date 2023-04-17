@@ -71,7 +71,7 @@ trait Result
         }
 
         /** Остаток получки */
-        $row->balance = round($row->toPayoff - $row->prepayment + $row->duty - ($row->tax ?? 0));
+        $row->balance = round($row->toPayoff - $row->prepayment + $row->duty - ($row->tax ?? 0) + ($row->fine ?? 0));
 
         /** Долг на конец периода */
         $row->duty_now = $row->balance - $row->duty;
@@ -107,6 +107,9 @@ trait Result
 
         /** Налог */
         $row->tax = $this->data['data']['tax'][$row->id] ?? 0;
+
+        /** Налог */
+        $row->fine = $this->data['data']['fine'][$row->id] ?? 0;
 
         return $row;
     }

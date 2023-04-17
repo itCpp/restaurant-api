@@ -40,7 +40,7 @@ trait Cashbox
             })
             ->where(function ($query) {
                 $query->whereNotIn('purpose_pay', Salaries::salaryCountPaysIds())
-                    ->where('purpose_pay', '!=', 4)
+                    ->whereNotIn('purpose_pay',  [4, 5])
                     ->where('purpose_pay', '!=', null);
             })
             ->groupBy('expense_subtype_id')
@@ -65,6 +65,21 @@ trait Cashbox
             });
 
         $this->data['data']['tax'] = $tax ?? [];
+
+        CashboxTransaction::selectRaw('sum(sum) as sum, expense_subtype_id as user_id')
+            ->whereIsExpense(true)
+            ->whereExpenseTypeId(1)
+            ->where(function ($query) {
+                $query->where('month', now()->create(request()->start ?: now())->format("Y-m"));
+            })
+            ->where('purpose_pay', 5)
+            ->groupBy('expense_subtype_id')
+            ->get()
+            ->each(function ($row) use (&$fine) {
+                $fine[$row->user_id] = abs($row->sum);
+            });
+
+        $this->data['data']['fine'] = $fine ?? [];
 
         return $this;
     }

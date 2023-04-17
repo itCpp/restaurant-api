@@ -153,6 +153,10 @@ class Expenses extends Controller
         $row->period_start = $request->period_start;
         $row->period_stop = $request->period_stop;
 
+        if ($row->type_pay == 1 && $row->purpose_pay == 5) {
+            $row->sum = $row->sum * (-1);
+        }
+
         $row->save();
 
         Log::write($row, $request);

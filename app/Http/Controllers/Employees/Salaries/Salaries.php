@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Employees\Salaries;
 
+use App\Models\EmployeeDuty;
 use Illuminate\Http\Request;
 
 class Salaries
