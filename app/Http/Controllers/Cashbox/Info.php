@@ -16,10 +16,16 @@ class Info extends Controller
      */
     public function index(Request $request)
     {
-        CashboxTransaction::selectRaw('sum(sum) sum, IFNULL(type_pay, 1) type_pay')
-            ->groupBy('type_pay')
+        CashboxTransaction::selectRaw('sum(sum) sum, IFNULL(type_pay, 1) type_pay, is_income, purpose_pay')
+            ->groupBy(['type_pay', 'is_income', 'purpose_pay'])
             ->get()
             ->each(function ($row) use (&$data) {
+
+                if (!$row->is_income) {
+                    if (in_array($row->purpose_pay, [4, 5])) {
+                        $row->sum = 0;
+                    }
+                }
 
                 $key = (int) $row->type_pay;
 
